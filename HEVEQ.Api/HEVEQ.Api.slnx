@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../HEVEQ.Application/HEVEQ.Application.csproj" />
+  <Project Path="../HEVEQ.Domain/HEVEQ.Domain.csproj" />
+  <Project Path="../HEVEQ.Infrastructure/HEVEQ.Infrastructure.csproj" />
+  <Project Path="HEVEQ.Api.csproj" />
+</Solution>

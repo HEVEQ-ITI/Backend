@@ -1,0 +1,6 @@
+@HEVEQ.Api_HostAddress = http://localhost:5198
+
+GET {{HEVEQ.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
