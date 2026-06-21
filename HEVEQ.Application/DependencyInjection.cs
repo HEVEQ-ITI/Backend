@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddAutoMapper(cfg => { }, assembly);
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
+        
 
         return services;
     }
