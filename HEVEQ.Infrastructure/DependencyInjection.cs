@@ -1,6 +1,7 @@
 using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Domain.Identity;
 using HEVEQ.Infrastructure.Persistence;
+using HEVEQ.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +37,10 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(provider =>
             provider.GetRequiredService<ApplicationDbContext>());
+
+        services.Configure<JwtHelper>(configuration.GetSection("JWT"));
+        services.AddScoped<IJwtService, JwtService>();
+
 
         return services;
     }
