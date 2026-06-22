@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+
 
 namespace HEVEQ.Infrastructure;
 
@@ -40,6 +43,9 @@ public static class DependencyInjection
 
         services.Configure<JwtHelper>(configuration.GetSection("JWT"));
         services.AddScoped<IJwtService, JwtService>();
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 
         return services;
