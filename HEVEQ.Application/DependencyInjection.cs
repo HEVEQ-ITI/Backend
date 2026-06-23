@@ -1,8 +1,10 @@
-﻿using System.Reflection;
-using FluentValidation;
+﻿using FluentValidation;
 using HEVEQ.Application.Common.Behaviours;
+using HEVEQ.Application.Features.Bookings.Services.Implementation;
+using HEVEQ.Application.Features.Bookings.Services.Interfaces;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace HEVEQ.Application;
 
@@ -20,7 +22,11 @@ public static class DependencyInjection
         services.AddAutoMapper(cfg => { }, assembly);
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
-        
+
+        services.AddScoped<IBookingAddressResolver, BookingAddressResolver>();
+        services.AddScoped<IBookingCreationService, BookingCreationService>();
+        services.AddScoped<ICancellationPolicyService, CancellationPolicyService>();
+
 
         return services;
     }
