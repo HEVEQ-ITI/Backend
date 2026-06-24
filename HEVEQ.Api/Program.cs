@@ -22,8 +22,17 @@ namespace HEVEQ.Api
 
             // Infrastructure Layer Dependencies
             builder.Services.AddInfrastructure(builder.Configuration);
-
             builder.Services.AddControllers();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AngularClient", policy =>
+                {
+                    policy
+                        .WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
             builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
@@ -70,6 +79,7 @@ namespace HEVEQ.Api
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AngularClient");
             app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
