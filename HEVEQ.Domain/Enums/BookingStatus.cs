@@ -17,5 +17,6 @@ public enum BookingStatus
     ResolvedReleased = 12,
     ResolvedRefunded = 13,
     PendingFieldVerification = 14,
-    FieldVerificationComplete = 15
+    FieldVerificationComplete = 15,
+    Cancelled = 16
 }
