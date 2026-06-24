@@ -6,7 +6,7 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Auth.Commad.Regiser
 {
-    public record RegisterComand(string FirstName, string LastName,string UserName, string Password, string Email): IRequest<AuthResponse>
+    public record RegisterComand(string FirstName, string LastName,string UserName, string Password, string Email,string PhoneNumber, string Role) : IRequest<AuthResponse>
     {
     }
 }

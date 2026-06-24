@@ -1,3 +1,4 @@
+using HEVEQ.Api.Middleware;
 using HEVEQ.Application;
 using HEVEQ.Application.Common.Mappings;
 using HEVEQ.Infrastructure;
@@ -23,6 +24,10 @@ namespace HEVEQ.Api
             builder.Services.AddInfrastructure(builder.Configuration);
 
             builder.Services.AddControllers();
+            builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
             builder.Services.AddEndpointsApiExplorer();
@@ -65,7 +70,7 @@ namespace HEVEQ.Api
             }
 
             app.UseHttpsRedirection();
-
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
 

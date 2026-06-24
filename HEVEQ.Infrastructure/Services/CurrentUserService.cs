@@ -5,10 +5,9 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
 
-
 namespace HEVEQ.Infrastructure.Services
 {
-    public class CurrentUserService : ICurrentUserService
+    public class CurrentUserService :ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 

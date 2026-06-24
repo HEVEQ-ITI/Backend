@@ -1,60 +1,92 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Auth.DTOs;
+using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HEVEQ.Application.Features.Auth.Commad.Regiser
 {
-    public class RegisterComandHandler (UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager,IJwtService jwtService, IApplicationDbContext context) : IRequestHandler<RegisterComand, AuthResponse>
+    public class RegisterComandHandler(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole<Guid>> roleManager,
+        IJwtService jwtService,
+        IApplicationDbContext context) : IRequestHandler<RegisterComand, AuthResponse>
     {
         public async Task<AuthResponse> Handle(RegisterComand request, CancellationToken cancellationToken)
         {
+            if (await userManager.FindByEmailAsync(request.Email) is not null)
+                return new AuthResponse { Message = "Email is already exists" };
 
-            if (await userManager.FindByEmailAsync(request.Email) is not null) 
-                return new AuthResponse
-                {
-                    Message = " Email is already exists"
-                };
-            if (await userManager.FindByNameAsync(request.UserName) is not null) 
-                return new AuthResponse
-                {
-                    Message = " userName is already exists"
-                };
+            if (await userManager.FindByNameAsync(request.UserName) is not null)
+                return new AuthResponse { Message = "UserName is already exists" };
+
             var user = new ApplicationUser
             {
                 UserName = request.UserName,
                 Email = request.Email,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
+                PhoneNumber = request.PhoneNumber,
+               
             };
+
             var result = await userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
             {
                 var errors = string.Empty;
                 foreach (var error in result.Errors)
                     errors += $"{error.Description} ,";
-                return new AuthResponse
-                {
-                    Message = errors
-                };
+                return new AuthResponse { Message = errors };
             }
 
-            if (!await roleManager.RoleExistsAsync("Customer"))
-                await roleManager.CreateAsync(new IdentityRole<Guid>("Customer"));
+            var allowedRoles = new[] { "Customer", "Provider", "Employee" };
+            var roleToAssign = allowedRoles.Contains(request.Role) ? request.Role : "Customer";
 
-            await userManager.AddToRoleAsync(user, "Customer");
+            if (!await roleManager.RoleExistsAsync(roleToAssign))
+                await roleManager.CreateAsync(new IdentityRole<Guid>(roleToAssign));
+
+            await userManager.AddToRoleAsync(user, roleToAssign);
+
+            // After: await userManager.AddToRoleAsync(user, roleToAssign);
+
+            // Seed the matching profile row so profile endpoints work immediately
+            if (roleToAssign == "Customer")
+            {
+                context.CustomerProfiles.Add(new HEVEQ.Domain.Entities.CustomerProfile
+                {
+                    UserId = user.Id,
+                    TrustScore = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+            else if (roleToAssign == "Provider")
+            {
+                context.ProviderProfiles.Add(new HEVEQ.Domain.Entities.ProviderProfile
+                {
+                    UserId = user.Id,
+                    CompanyName = $"{user.FirstName}'s Company",  // default, provider updates via PUT
+                    ServiceRadiusKm = 10,
+                    AverageRating = 0,
+                    TotalReviewsCount = 0,
+                    CompletedBookingsCount = 0,
+                    ResponseRate = 0,
+                    SearchRankingModifier = 1,
+                    TrustScore = 0,
+                    TrustLevel = HEVEQ.Domain.Enums.TrustLevel.Standard,
+                    OnboardingTier = 1,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
 
             var token = await jwtService.GenerateAccessToken(user);
 
             var refreshToken = jwtService.GenerateRefreshToken();
 
-            //user.RefreshTokens.Add(refreshToken);
-            //var isUpdated = await userManager.UpdateAsync(user);
-           
             refreshToken.UserId = user.Id;
             context.RefreshTokens.Add(refreshToken);
 
@@ -64,7 +96,7 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
             {
                 UserId = user.Id,
                 Email = request.Email,
-                Roles = new List<string> { "Customer" },
+                Roles = new List<string> { roleToAssign },
                 UserName = request.UserName,
                 IsAuthenticated = true,
                 ExpiresAt = refreshToken.ExpiresAt,
