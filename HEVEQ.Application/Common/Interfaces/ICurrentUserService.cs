@@ -8,5 +8,6 @@ namespace HEVEQ.Application.Common.Interfaces
     {
         Guid? UserId { get; }
         string? Role { get; }
+        bool IsAuthenticated { get; }
     }
 }

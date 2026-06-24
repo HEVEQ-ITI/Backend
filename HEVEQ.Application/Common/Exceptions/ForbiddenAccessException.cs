@@ -1,7 +1,18 @@
-﻿namespace HEVEQ.Application.Common.Exceptions;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace HEVEQ.Application.Common.Exceptions;
 
 public class ForbiddenAccessException : Exception
 {
-    public ForbiddenAccessException(string message = "You do not have permission.")
-        : base(message) { }
+    public ForbiddenAccessException()
+        : base("You do not have permission to perform this action.")
+    {
+    }
+
+    public ForbiddenAccessException(string message)
+        : base(message)
+    {
+    }
 }

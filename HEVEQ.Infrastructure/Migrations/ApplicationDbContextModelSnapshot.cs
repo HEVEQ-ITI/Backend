@@ -427,6 +427,29 @@ namespace HEVEQ.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Heavy Excavators",
+                            Slug = "heavy-excavators",
+                            Type = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Tower Cranes",
+                            Slug = "tower-cranes",
+                            Type = 0
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Concrete Mixers",
+                            Slug = "concrete-mixers",
+                            Type = 0
+                        });
                 });
 
             modelBuilder.Entity("HEVEQ.Domain.Entities.CategoryPricingAggregate", b =>

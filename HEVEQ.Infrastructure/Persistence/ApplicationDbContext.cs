@@ -1,5 +1,6 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Domain.Entities;
+using HEVEQ.Domain.Enums;
 using HEVEQ.Domain.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace HEVEQ.Infrastructure.Persistence
@@ -73,6 +75,32 @@ namespace HEVEQ.Infrastructure.Persistence
             base.OnModelCreating(builder);
 
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+            builder.Entity<Category>().HasData(
+        new Category
+        {
+            Id = 1,
+            Name = "Heavy Excavators",
+            Slug = "heavy-excavators",
+            Type = CategoryType.Service, 
+            ParentId = null
+        },
+        new Category
+        {
+            Id = 2,
+            Name = "Tower Cranes",
+            Slug = "tower-cranes",
+            Type = CategoryType.Service,
+            ParentId = null
+        },
+        new Category
+        {
+            Id = 3,
+            Name = "Concrete Mixers",
+            Slug = "concrete-mixers",
+            Type = CategoryType.Service,
+            ParentId = null
+        }
+    );
         }
     }
 }

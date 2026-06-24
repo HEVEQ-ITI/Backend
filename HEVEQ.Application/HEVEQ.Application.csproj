@@ -25,6 +25,7 @@
   <ItemGroup>
     <Folder Include="Common\Models\" />
     <Folder Include="Features\Auth\Query\" />
+    <Folder Include="Features\Categories\Commands\" />
   </ItemGroup>
 
 </Project>
