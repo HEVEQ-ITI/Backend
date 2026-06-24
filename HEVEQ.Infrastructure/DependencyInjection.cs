@@ -41,7 +41,8 @@ public static class DependencyInjection
         services.Configure<JwtHelper>(configuration.GetSection("JWT"));
         services.AddScoped<IJwtService, JwtService>();
 
-
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
         return services;
     }
 }
