@@ -64,6 +64,8 @@ namespace HEVEQ.Infrastructure.Services
                     user.Email!
                 ),
 
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+
                new Claim("uid", user.Id.ToString())
             }
             .Union(userClaims)

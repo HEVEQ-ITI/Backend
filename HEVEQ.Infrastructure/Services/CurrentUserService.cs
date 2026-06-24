@@ -20,11 +20,18 @@ namespace HEVEQ.Infrastructure.Services
         {
             get
             {
-                var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = _httpContextAccessor.HttpContext?.User;
+
+                var userIdClaim =
+                    user?.FindFirstValue("uid")
+                    ?? user?.FindFirstValue(ClaimTypes.NameIdentifier);
+
                 return Guid.TryParse(userIdClaim, out var parsedGuid) ? parsedGuid : null;
             }
         }
 
         public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+        public string? Role => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
     }
 }

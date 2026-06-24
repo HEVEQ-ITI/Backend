@@ -26,14 +26,14 @@ public class ServiceListingsController(ISender sender) : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
+    [Authorize(Roles = "Provider")]
     public async Task<ActionResult<List<ServiceListingDto>>> GetApproved()
     {
         return await sender.Send(new GetApprovedServiceListingsQuery());
     }
 
     [HttpGet("{id:guid}")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Provider")]
     public async Task<ActionResult<ServiceListingDetailDto>> GetById(Guid id)
     {
         return await sender.Send(new GetServiceListingByIdQuery(id));
