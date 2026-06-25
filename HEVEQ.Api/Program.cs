@@ -18,7 +18,7 @@ namespace HEVEQ.Api
             // Add services to the container.
 
             // Application Layer Dependencies
-            builder.Services.AddApplication();
+            builder.Services.AddApplication(builder.Configuration);
 
             // Infrastructure Layer Dependencies
             builder.Services.AddInfrastructure(builder.Configuration);
