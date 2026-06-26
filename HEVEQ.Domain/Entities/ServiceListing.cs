@@ -84,6 +84,9 @@ public class ServiceListing
 
     public ApplicationUser? RejectedByAdmin { get; set; }
 
+    public string? Governorate { get; set; }
+    public string? Region { get; set; }
+
     public ICollection<ServiceListingPhoto> Photos { get; set; } = new List<ServiceListingPhoto>();
 
     public ICollection<ServiceListingOperator> ServiceListingOperators { get; set; } = new List<ServiceListingOperator>();

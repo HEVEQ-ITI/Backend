@@ -28,6 +28,9 @@ public class ExceptionHandlingMiddleware
                 ForbiddenAccessException =>
                     (HttpStatusCode.Forbidden, (object)new { message = ex.Message }),
 
+                BadRequestException =>
+                (HttpStatusCode.BadRequest, (object)new { message = ex.Message }),
+
                 FluentValidation.ValidationException ve =>
                     (HttpStatusCode.BadRequest, (object)new
                     {
