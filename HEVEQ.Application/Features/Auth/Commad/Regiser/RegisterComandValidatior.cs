@@ -19,6 +19,9 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
             RuleFor(x => x.Password).NotEmpty().WithMessage("Password is requiered");
             RuleFor(x => x.FirstName).NotEmpty().WithMessage("FirstName is requiered");
             RuleFor(x => x.LastName).NotEmpty().WithMessage("LastName is requiered");
+            RuleFor(x => x.Role).NotEmpty().WithMessage("Role is requiered");
+            RuleFor(x => x.PhoneNumber).NotEmpty().WithMessage("PhoneNumber is requiered");
+            RuleFor(x => x.PhoneNumber).Length(11).WithMessage("enter a vlaid phone number");
         }
     }
 }

@@ -28,11 +28,11 @@ namespace HEVEQ.Application.Features.Auth.Commad.RefreshToken
                 return auth;
             }
 
-            var refreshToken  = user.RefreshTokens.Single(x=> x.Token == request.refreshToken);
+            var refreshToken = user.RefreshTokens.FirstOrDefault(x => x.Token == request.refreshToken);
 
-            if (refreshToken.IsRevoked)
+            if (refreshToken == null || refreshToken.IsRevoked || refreshToken.ExpiresAt <= DateTime.UtcNow)
             {
-                auth.Message = " inActive Token";
+                auth.Message = "Token is invalid, expired, or revoked";
                 return auth;
             }
             refreshToken.IsRevoked = true;

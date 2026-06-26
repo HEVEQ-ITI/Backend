@@ -25,6 +25,7 @@ namespace HEVEQ.Application.Features.Auth.Commad.Login
 
             var auth = new AuthResponse();
             var userRoles = await userManager.GetRolesAsync(user);
+            auth.DisplayName = user.FirstName + " " + user.LastName;
             auth.IsAuthenticated = true;
             auth.Email = request.email;
             auth.AccessToken = await jwtService.GenerateAccessToken(user);
@@ -53,6 +54,30 @@ namespace HEVEQ.Application.Features.Auth.Commad.Login
                 Console.WriteLine($"Refresh UserId = {newRefreshToken.UserId}");
 
                 await context.SaveChangesAsync(cancellationToken);
+            }
+            if(userRoles.FirstOrDefault() == "Customer")
+            {
+                var address = context.Addresses.Any(x => x.UserId == user.Id);
+                var docs = context.Documents.Any(x=> x.UserId == user.Id);
+                
+                if(address || docs)
+                    auth.ProfileCompleted = true;
+                
+            }
+            else if(userRoles.FirstOrDefault() == "Provider")
+            {
+                var provider = await context.ProviderProfiles
+                                    .AsNoTracking()
+                                    .FirstOrDefaultAsync(x => x.UserId == user.Id, cancellationToken);
+                if (provider is not null)
+                {
+                    auth.ProfileCompleted =
+                        !string.IsNullOrEmpty(provider.CompanyName) &&
+                        provider.BaseLatitude.HasValue &&
+                        provider.BaseLongitude.HasValue &&
+                        provider.ServiceRadiusKm > 0 &&
+                        provider.ResponseRate > 0;
+                }
             }
 
             return auth;
