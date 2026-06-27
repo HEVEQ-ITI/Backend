@@ -1,4 +1,5 @@
-﻿using HEVEQ.Application.Common.Interfaces;
+﻿using HEVEQ.Application.Common.Exceptions;
+using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
 using MediatR;
@@ -9,23 +10,27 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlace.Commands.AddMarketplaceListingPhoto
 {
-    public class AddMarketplaceListingPhotoCommandHandler(IApplicationDbContext context) : IRequestHandler<AddMarketplaceListingPhotoCommand, Guid>
+    public class AddMarketplaceListingPhotoCommandHandler(IApplicationDbContext context,ICurrentUserService currentUser) : IRequestHandler<AddMarketplaceListingPhotoCommand, Guid>
     {
+        private const int MinPhotosForReview = 3;
+        private const int MaxPhotos = 12;
         public async Task<Guid> Handle(AddMarketplaceListingPhotoCommand request, CancellationToken cancellationToken)
         {
-            var currentUserId= Guid.Parse("FC6FF724-CED5-468A-6964-08DED0682657");
+            if (!currentUser.UserId.HasValue)
+                throw new ForbiddenAccessException("User is not authenticated.");
+
             var listing = await context.MarketplaceListings
-            .SingleOrDefaultAsync(l => l.Id == request.ListingId, cancellationToken)
-            ?? throw new KeyNotFoundException($"Marketplace listing with ID {request.ListingId} was not found.");
+                .Include(l => l.Photos)
+                .SingleOrDefaultAsync(l => l.Id == request.ListingId, cancellationToken)
+                ?? throw new NotFoundException(nameof(MarketplaceListing), request.ListingId);
 
-            if (listing.SellerId != currentUserId)
-                throw new UnauthorizedAccessException("This listing does not belong to you.");
+            if (listing.SellerId != currentUser.UserId.Value)
+                throw new ForbiddenAccessException("This listing does not belong to you.");
 
-            if (listing.Status == MarketplaceListingStatus.Active)
-            {
-                listing.Status = MarketplaceListingStatus.PendingReview;
-            }
-            listing.UpdatedAt = DateTime.UtcNow;
+            if (listing.Photos.Count >= MaxPhotos)
+                throw new ValidationException("Photos", $"A listing cannot have more than {MaxPhotos} photos.");
+
+           
 
             var photo = new MarketplaceListingPhoto
             {
@@ -37,6 +42,21 @@ namespace HEVEQ.Application.Features.MarketPlace.Commands.AddMarketplaceListingP
             };
 
             context.MarketplaceListingPhotos.Add(photo);
+
+            if (listing.Status == MarketplaceListingStatus.Draft &&
+                listing.Photos.Count + 1 >= MinPhotosForReview)
+            {
+                listing.Status = MarketplaceListingStatus.PendingReview;
+            }
+
+            // A previously Active listing gets a new photo -> back through review.
+            else if (listing.Status == MarketplaceListingStatus.Active)
+            {
+                listing.Status = MarketplaceListingStatus.PendingReview;
+            }
+
+            listing.UpdatedAt = DateTime.UtcNow;
+
             await context.SaveChangesAsync(cancellationToken);
 
             return photo.Id;

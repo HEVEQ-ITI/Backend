@@ -38,6 +38,11 @@ public class ExceptionHandlingMiddleware
                             .GroupBy(e => e.PropertyName)
                             .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
                     }),
+                ValidationException ve =>
+                   (HttpStatusCode.BadRequest, (object)new
+                   {
+                       errors = ve.Errors
+                   }),
 
                 _ =>
                     (HttpStatusCode.InternalServerError, (object)new { message = "An unexpected error occurred." })

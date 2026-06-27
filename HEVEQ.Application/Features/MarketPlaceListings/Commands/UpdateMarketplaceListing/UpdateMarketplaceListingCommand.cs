@@ -7,7 +7,7 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlace.Commands.UpdateMarketplaceListing
 {
-    public record UpdateMarketplaceListingCommand(Guid Id, Guid SellerId, UpdateMarketplaceListingRequest Request) : IRequest;
+    public record UpdateMarketplaceListingCommand(Guid Id, UpdateMarketplaceListingRequest Request) : IRequest;
 
 }
 public record UpdateMarketplaceListingRequest(
