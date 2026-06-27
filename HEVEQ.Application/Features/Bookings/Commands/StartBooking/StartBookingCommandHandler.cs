@@ -4,20 +4,21 @@ using HEVEQ.Application.Features.Bookings.Services;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using HEVEQ.Application.Features.Bookings.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.StartBooking
 {
-    public sealed class StartBookingCommandHandler : IRequestHandler<StartBookingCommand, BookingDto>
+    public sealed class StartBookingCommandHandler : IRequestHandler<StartBookingCommand, StartBookingResponseDto>
     {
         private readonly IApplicationDbContext _context;
         public StartBookingCommandHandler(IApplicationDbContext context)
         {
             _context = context;
         }
-        public async Task<BookingDto> Handle(StartBookingCommand request, CancellationToken cancellationToken)
+        public async Task<StartBookingResponseDto> Handle(StartBookingCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
                 .Include(b => b.ServiceListing)
@@ -56,7 +57,15 @@ namespace HEVEQ.Application.Features.Bookings.Commands.StartBooking
             assignment.Status = OperatorAssignmentStatus.InProgress;
 
             await _context.SaveChangesAsync(cancellationToken);
-            return BookingDtoMapper.ToDto(booking);
+            return new StartBookingResponseDto
+            {
+                Id = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                Status = booking.Status.ToString(),
+                StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
+                StartedAt = booking.StartedAt,
+                Message = "Booking started successfully"
+            };
         }
     }
 }

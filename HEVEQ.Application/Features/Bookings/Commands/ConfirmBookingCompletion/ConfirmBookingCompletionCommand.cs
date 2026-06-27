@@ -6,5 +6,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.ConfirmBookingCompletion
 {
-    public sealed record ConfirmBookingCompletionCommand(Guid CustomerId, Guid BookingId) : IRequest<BookingDto>;
+    public sealed record ConfirmBookingCompletionCommand(Guid CustomerId, Guid BookingId) : IRequest<ConfirmBookingCompletionResponseDto>;
 }

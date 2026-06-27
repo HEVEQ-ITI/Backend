@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using HEVEQ.Application.Features.Bookings.DTOs;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,5 +25,5 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateBooking
         string? AccessRequirements,
         string? SafetyNotes,
         bool AcceptOutOfZoneSurcharge
-    ) : IRequest<Guid>;
+    ) : IRequest<CreateBookingResponseDto>;
 }

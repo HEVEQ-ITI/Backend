@@ -6,5 +6,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.RejectTimeAdjustment
 {
-    public sealed record RejectTimeAdjustmentCommand(Guid CustomerId, Guid TimeAdjustmentRequestId) : IRequest<BookingDto>;
+    public sealed record RejectTimeAdjustmentCommand(Guid CustomerId, Guid TimeAdjustmentRequestId) : IRequest<TimeAdjustmentDecisionResponseDto>;
 }

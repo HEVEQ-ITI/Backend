@@ -1,5 +1,6 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.DTOs;
+using HEVEQ.Application.Features.Bookings.Helpers;
 using HEVEQ.Application.Features.Bookings.Services;
 using HEVEQ.Domain.Enums;
 using MediatR;
@@ -10,7 +11,7 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.RejectTimeAdjustment
 {
-    public sealed class RejectTimeAdjustmentCommandHandler : IRequestHandler<RejectTimeAdjustmentCommand, BookingDto>
+    public sealed class RejectTimeAdjustmentCommandHandler : IRequestHandler<RejectTimeAdjustmentCommand, TimeAdjustmentDecisionResponseDto>
     {
         private readonly IApplicationDbContext _context;
         public RejectTimeAdjustmentCommandHandler(IApplicationDbContext context)
@@ -18,9 +19,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.RejectTimeAdjustment
             _context = context;
         }
 
-        public async Task<BookingDto> Handle(
-            RejectTimeAdjustmentCommand request,
-            CancellationToken cancellationToken)
+        public async Task<TimeAdjustmentDecisionResponseDto> Handle(RejectTimeAdjustmentCommand request, CancellationToken cancellationToken)
         {
             var adjustmentRequest = await _context.BookingTimeAdjustmentRequests
                 .Include(x => x.Booking)
@@ -47,9 +46,23 @@ namespace HEVEQ.Application.Features.Bookings.Commands.RejectTimeAdjustment
                 throw new InvalidOperationException("Time adjustment can only be rejected before booking completion.");
 
             adjustmentRequest.Status = BookingTimeAdjustmentStatus.Rejected;
+            adjustmentRequest.CustomerAcknowledgedAt = DateTime.Now;
 
             await _context.SaveChangesAsync(cancellationToken);
-            return BookingDtoMapper.ToDto(booking);
+            return new TimeAdjustmentDecisionResponseDto
+            {
+                Id = adjustmentRequest.Id,
+                BookingId = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                RequestedAdditionalHours = adjustmentRequest.RequestedAdditionalHrs,
+                AdditionalCostAmount = adjustmentRequest.AdditionalCostAmount,
+                BookingEstimatedDurationHours = booking.EstimatedDurationHours,
+                BookingEstimatedTotal = booking.EstimatedTotal,
+                Status = adjustmentRequest.Status.ToString(),
+                StatusAr = TimeAdjustmentDisplayHelper.GetStatusAr(adjustmentRequest.Status),
+                CustomerAcknowledgedAt = adjustmentRequest.CustomerAcknowledgedAt,
+                Message = "Time adjustment request rejected successfully"
+            };
         }
     }
 }

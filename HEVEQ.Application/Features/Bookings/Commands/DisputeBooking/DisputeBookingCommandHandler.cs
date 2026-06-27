@@ -1,28 +1,23 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.DTOs;
-using HEVEQ.Application.Features.Bookings.Services;
+using HEVEQ.Application.Features.Bookings.Helpers;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
 {
-    public sealed class DisputeBookingCommandHandler : IRequestHandler<DisputeBookingCommand, BookingDto>
+    public sealed class DisputeBookingCommandHandler : IRequestHandler<DisputeBookingCommand, DisputeBookingResponseDto>
     {
         private readonly IApplicationDbContext _context;
-
         public DisputeBookingCommandHandler(IApplicationDbContext context)
         {
             _context = context;
         }
 
-        public async Task<BookingDto> Handle(DisputeBookingCommand request, CancellationToken cancellationToken)
+        public async Task<DisputeBookingResponseDto> Handle(DisputeBookingCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
-                .Include(x => x.ServiceListing)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking is null)
@@ -32,20 +27,32 @@ namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
                 throw new InvalidOperationException("Only the booking customer can open a dispute.");
 
             if (booking.Status != BookingStatus.PendingCustomerConfirmation)
-                throw new InvalidOperationException("Dispute can only be opened after provider marks the booking as completed.");
+                throw new InvalidOperationException("Booking must be pending customer confirmation before opening a dispute.");
+
+            if (string.IsNullOrWhiteSpace(request.Reason))
+                throw new InvalidOperationException("Dispute reason is required.");
+
+            var evidencePhotoUrls = request.EvidencePhotoUrls ?? Array.Empty<string>();
 
             booking.Status = BookingStatus.Disputed;
             booking.DisputeOpenedAt = DateTime.UtcNow;
 
-            // TODO: When Tickets module is implemented:
-            // Create a Ticket linked to this BookingId with Category = CompletionDispute,
-            // store the customer's initial dispute reason as TicketMessage,
-            // store any attachments as TicketAttachments,
-            // and notify Admin / Customer Service queue.
-            // Current MVP step only marks the booking as Disputed and blocks the normal completion flow.
+            // TODO: Create Ticket with Category = CompletionDispute when Tickets feature is ready.
+            // Ticket should store BookingId, OpenedByUserId, Reason, EvidencePhotoUrls, Status = Open.
+
+            // TODO: Freeze escrow release when payment and escrow module is implemented.
 
             await _context.SaveChangesAsync(cancellationToken);
-            return BookingDtoMapper.ToDto(booking);
+            return new DisputeBookingResponseDto
+            {
+                Id = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                Status = booking.Status.ToString(),
+                StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
+                DisputeOpenedAt = booking.DisputeOpenedAt,
+                TicketId = null,
+                Message = "Dispute opened successfully"
+            };
         }
     }
 }

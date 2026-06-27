@@ -6,5 +6,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.AcceptBooking
 {
-    public sealed record AcceptBookingCommand(Guid ProviderUserId, Guid BookingId, Guid OperatorId) : IRequest<BookingDto>;
+    public sealed record AcceptBookingCommand(Guid ProviderUserId, Guid BookingId, Guid OperatorId) : IRequest<AcceptBookingResponseDto>;
 }
