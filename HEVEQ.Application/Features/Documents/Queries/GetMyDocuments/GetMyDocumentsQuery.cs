@@ -6,6 +6,6 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Documents.Queries.GetMyDocuments
 {
-    public record GetMyDocumentsQuery(Guid UserId) : IRequest<List<DocumentDto>>;
+    public record GetMyDocumentsQuery : IRequest<List<DocumentDto>>;
     
 }

@@ -6,6 +6,6 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetProviderOrder
 {
-    public record GetProviderOrderQuery(Guid SellerId) : IRequest<List<SaleOrderDto>>;
+    public record GetProviderOrderQuery : IRequest<List<SaleOrderDto>>;
     
 }

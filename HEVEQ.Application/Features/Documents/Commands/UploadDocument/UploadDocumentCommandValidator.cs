@@ -9,7 +9,6 @@ namespace HEVEQ.Application.Features.Documents.Commands.UploadDocument
     {
         public UploadDocumentCommandValidator()
         {
-            RuleFor(x => x.UserId).NotEmpty();
 
             RuleFor(x => x.Request.FileUrl)
                 .NotEmpty()

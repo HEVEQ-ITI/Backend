@@ -7,10 +7,9 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Documents.Commands.UploadDocument
 {
-    public record UploadDocumentCommand(Guid UserId, UploadDocumentRequest Request) : IRequest<DocumentDto>;
+    public record UploadDocumentCommand(UploadDocumentRequest Request) : IRequest<UploadDocumentResponse>;
     
 }
-
 public record UploadDocumentRequest(
     DocumentType DocumentType,
     string FileUrl,

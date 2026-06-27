@@ -6,6 +6,6 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.DispatchMarketplaceOrder
 {
-    public record DispatchMarketplaceOrderCommand(Guid OrderId, Guid SellerId, DispatchMarketplaceOrderRequest Request) : IRequest<MarketplaceOrderDto>;
+    public record DispatchMarketplaceOrderCommand(Guid OrderId, DispatchMarketplaceOrderRequest Request) : IRequest<MarketplaceOrderDto>;
    public record DispatchMarketplaceOrderRequest(string? TrackingNumber);
 }

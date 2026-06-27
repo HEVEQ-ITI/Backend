@@ -10,7 +10,6 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.DispatchMarketpl
         public DispatchMarketplaceOrderCommandValidator()
         {
             RuleFor(x => x.OrderId).NotEmpty();
-            RuleFor(x => x.SellerId).NotEmpty();
             RuleFor(x => x.Request.TrackingNumber)
                 .MaximumLength(100)
                 .When(x => x.Request.TrackingNumber is not null);

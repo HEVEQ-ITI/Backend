@@ -5,6 +5,6 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlace.Commands.DeleteMarketPlaceListing
 {
-    public record DeleteMarketPlaceListingCommand(Guid Id, Guid SellerId) : IRequest;
+    public record DeleteMarketPlaceListingCommand(Guid Id) : IRequest;
     
 }

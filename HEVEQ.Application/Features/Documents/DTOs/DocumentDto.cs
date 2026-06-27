@@ -12,9 +12,10 @@ namespace HEVEQ.Application.Features.Documents.DTOs
         public Guid? ServiceListingId { get; set; }
         public Guid? MarketplaceListingId { get; set; }
         public Guid? OperatorId { get; set; }
-        public DocumentType DocumentType { get; set; }
+        public string DocumentType { get; set; } = string.Empty;
         public string FileUrl { get; set; } = string.Empty;
-        public DocumentVerificationStatus Status { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string StatusAr { get; set; } = string.Empty;
         public DateOnly? ExpiryDate { get; set; }
         public string? FailureReason { get; set; }
         public DateTime UploadedAt { get; set; }

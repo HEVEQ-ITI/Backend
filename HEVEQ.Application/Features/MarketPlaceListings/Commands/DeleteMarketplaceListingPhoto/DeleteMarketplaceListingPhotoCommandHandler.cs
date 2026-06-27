@@ -1,4 +1,7 @@
-﻿using HEVEQ.Application.Common.Interfaces;
+﻿using HEVEQ.Application.Common.Exceptions;
+using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Domain.Entities;
+using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -7,31 +10,38 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlace.Commands.DeleteMarketplaceListingPhoto
 {
-    public class DeleteMarketplaceListingPhotoCommandHandler(IApplicationDbContext context) : IRequestHandler<DeleteMarketplaceListingPhotoCommand>
+    public class DeleteMarketplaceListingPhotoCommandHandler(IApplicationDbContext context,ICurrentUserService currentUser) : IRequestHandler<DeleteMarketplaceListingPhotoCommand>
     {
+        private const int MinPhotosWhileUnderReviewOrActive = 3;
         public async Task Handle(DeleteMarketplaceListingPhotoCommand request, CancellationToken cancellationToken)
         {
-            var currentUserId= Guid.Parse("FC6FF724-CED5-468A-6964-08DED0682657");
+            if (!currentUser.UserId.HasValue)
+                throw new ForbiddenAccessException("User is not authenticated.");
+
 
             var listing = await context.MarketplaceListings
-            .FirstOrDefaultAsync(l => l.Id == request.ListingId, cancellationToken);
+                .Include(l => l.Photos)
+                .FirstOrDefaultAsync(l => l.Id == request.ListingId, cancellationToken)
+                ?? throw new NotFoundException(nameof(MarketplaceListing), request.ListingId);
 
-            if (listing is null)
-                throw new KeyNotFoundException("Not Found Listing");
+
+            if (listing.SellerId != currentUser.UserId.Value)
+                throw new ForbiddenAccessException("You are not authorized to delete this photo.");
 
 
-            var photo = await context.MarketplaceListingPhotos
-            .FirstOrDefaultAsync(p => p.Id == request.PhotoId && p.ListingId == request.ListingId, cancellationToken); 
+            var photo = listing.Photos.FirstOrDefault(p => p.Id == request.PhotoId)
+               ?? throw new NotFoundException(nameof(MarketplaceListingPhoto), request.PhotoId);
 
-            if (photo == null)
-                throw new KeyNotFoundException("Photo not found or doesn't belong to this listing.");
-
-            if (photo.Listing.SellerId != currentUserId)
-                throw new UnauthorizedAccessException("You are not authorized to delete this photo.");
-
-            photo.Listing.UpdatedAt = DateTime.UtcNow;
+            if (listing.Status != MarketplaceListingStatus.Draft &&
+                  listing.Photos.Count <= MinPhotosWhileUnderReviewOrActive)
+            {
+                throw new ValidationException("Photos",
+                    $"A listing under review or active must keep at least {MinPhotosWhileUnderReviewOrActive} photos.");
+            }
 
             context.MarketplaceListingPhotos.Remove(photo);
+            listing.UpdatedAt = DateTime.UtcNow;
+
             await context.SaveChangesAsync(cancellationToken);
         }
 
