@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Domain.Entities;
+using HEVEQ.Domain.Enums;
 
 namespace HEVEQ.Application.Features.Operators.Commands.DeleteOperator;
 
@@ -42,6 +43,18 @@ public class DeleteOperatorCommandHandler : IRequestHandler<DeleteOperatorComman
         if (op.ProviderProfileId != providerProfileId)
             throw new ForbiddenAccessException(
                 "You do not have permission to delete this operator.");
+
+        // Business Rule: cannot deactivate an operator with an active assignment
+        var hasActiveAssignment = await _context.OperatorAssignments
+            .AnyAsync(a => a.OperatorId == op.Id
+                        && (a.Status == OperatorAssignmentStatus.Assigned
+                         || a.Status == OperatorAssignmentStatus.Confirmed
+                         || a.Status == OperatorAssignmentStatus.InProgress),
+                      cancellationToken);
+
+        if (hasActiveAssignment)
+            throw new InvalidOperationException(
+                "Cannot deactivate this operator because they have an active assignment.");
 
         // Soft delete — IsActive = false, row stays in DB
         op.IsActive = false;

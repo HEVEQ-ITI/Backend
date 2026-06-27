@@ -70,10 +70,27 @@ public class CreateEmployeeCommandHandler
 
         await _userManager.AddToRoleAsync(user, employeeRole);
 
+        // ── Business Rule 3: user must not already have an EmployeeProfile ─
+        // Prevents duplicate profiles if the endpoint is called twice for the same user
+        var profileAlreadyExists = await _context.EmployeeProfiles
+            .AnyAsync(e => e.UserId == user.Id, cancellationToken);
+
+        if (profileAlreadyExists)
+            throw new InvalidOperationException(
+                "An employee profile already exists for this user.");
+
         // ── Auto-generate EmployeeCode (format: EMP-YYYYMMDD-XXXX) ─────────
-        var datePart = DateTime.UtcNow.ToString("yyyyMMdd");
-        var randomPart = Guid.NewGuid().ToString("N")[..4].ToUpper();
-        var employeeCode = $"EMP-{datePart}-{randomPart}";
+        // Retry loop guarantees uniqueness — collision chance is extremely low
+        // but we check the DB to be safe instead of letting it throw a DB error
+        string employeeCode;
+        do
+        {
+            var datePart = DateTime.UtcNow.ToString("yyyyMMdd");
+            var randomPart = Guid.NewGuid().ToString("N")[..4].ToUpper();
+            employeeCode = $"EMP-{datePart}-{randomPart}";
+        }
+        while (await _context.EmployeeProfiles
+            .AnyAsync(e => e.EmployeeCode == employeeCode, cancellationToken));
 
         // ── Create EmployeeProfile ─────────────────────────────────────────
         var profile = new EmployeeProfile

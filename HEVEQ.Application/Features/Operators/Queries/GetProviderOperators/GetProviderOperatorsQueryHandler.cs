@@ -43,7 +43,8 @@ public class GetProviderOperatorsQueryHandler
 
         // Only returns operators that belong to this provider — never others
         return await _context.Operators
-            .Where(o => o.ProviderProfileId == providerProfileId)
+      .Where(o => o.ProviderProfileId == providerProfileId
+         && (request.IncludeInactive || o.IsActive))
             .OrderBy(o => o.FullName)
             .ProjectTo<OperatorDto>(_mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
