@@ -12,34 +12,68 @@ namespace HEVEQ.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.InsertData(
-                table: "Categories",
-                columns: new[] { "Id", "Name", "ParentId", "Slug", "Type" },
-                values: new object[,]
-                {
-                    { 1, "Heavy Excavators", null, "heavy-excavators", 0 },
-                    { 2, "Tower Cranes", null, "tower-cranes", 0 },
-                    { 3, "Concrete Mixers", null, "concrete-mixers", 0 }
-                });
+            migrationBuilder.Sql("""
+                IF EXISTS (
+                    SELECT 1
+                    FROM [sys].[identity_columns]
+                    WHERE [name] = N'Id'
+                    AND [object_id] = OBJECT_ID(N'[Categories]')
+            )
+    BEGIN
+    SET IDENTITY_INSERT [Categories] ON;
+END
+
+IF NOT EXISTS (
+    SELECT 1 FROM [Categories]
+    WHERE [Id] = 1 OR [Slug] = N'heavy-excavators'
+)
+BEGIN
+    INSERT INTO [Categories] ([Id], [Name], [ParentId], [Slug], [Type])
+    VALUES (1, N'Heavy Excavators', NULL, N'heavy-excavators', 0);
+END
+
+IF NOT EXISTS (
+    SELECT 1 FROM [Categories]
+    WHERE [Id] = 2 OR [Slug] = N'tower-cranes'
+)
+BEGIN
+    INSERT INTO [Categories] ([Id], [Name], [ParentId], [Slug], [Type])
+    VALUES (2, N'Tower Cranes', NULL, N'tower-cranes', 0);
+END
+
+IF NOT EXISTS (
+    SELECT 1 FROM [Categories]
+    WHERE [Id] = 3 OR [Slug] = N'concrete-mixers'
+)
+BEGIN
+    INSERT INTO [Categories] ([Id], [Name], [ParentId], [Slug], [Type])
+    VALUES (3, N'Concrete Mixers', NULL, N'concrete-mixers', 0);
+END
+
+IF EXISTS (
+    SELECT 1
+    FROM [sys].[identity_columns]
+    WHERE [name] = N'Id'
+      AND [object_id] = OBJECT_ID(N'[Categories]')
+)
+BEGIN
+    SET IDENTITY_INSERT [Categories] OFF;
+END
+""");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DeleteData(
-                table: "Categories",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Categories",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Categories",
-                keyColumn: "Id",
-                keyValue: 3);
+            migrationBuilder.Sql("""
+            DELETE FROM [Categories]
+            WHERE [Id] IN (1, 2, 3)
+                AND [Slug] IN (
+                N'heavy-excavators',
+                N'tower-cranes',
+                N'concrete-mixers'
+            );
+        """);
         }
     }
 }
