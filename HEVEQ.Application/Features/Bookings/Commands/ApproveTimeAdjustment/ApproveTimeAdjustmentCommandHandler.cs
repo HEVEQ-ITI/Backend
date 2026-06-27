@@ -1,6 +1,7 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.Commands.ApproveTimeAdjustment;
 using HEVEQ.Application.Features.Bookings.DTOs;
+using HEVEQ.Application.Features.Bookings.Helpers;
 using HEVEQ.Application.Features.Bookings.Services;
 using HEVEQ.Domain.Enums;
 using MediatR;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.ApproveTimeAdjustment
 {
-    public sealed class ApproveTimeAdjustmentCommandHandler : IRequestHandler<ApproveTimeAdjustmentCommand, BookingDto>
+    public sealed class ApproveTimeAdjustmentCommandHandler : IRequestHandler<ApproveTimeAdjustmentCommand, TimeAdjustmentDecisionResponseDto>
     {
         private readonly IApplicationDbContext _context;
         public ApproveTimeAdjustmentCommandHandler(IApplicationDbContext context)
@@ -16,7 +17,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.ApproveTimeAdjustment
             _context = context;
         }
 
-        public async Task<BookingDto> Handle(ApproveTimeAdjustmentCommand request, CancellationToken cancellationToken)
+        public async Task<TimeAdjustmentDecisionResponseDto> Handle(ApproveTimeAdjustmentCommand request, CancellationToken cancellationToken)
         {
             var adjustmentRequest = await _context.BookingTimeAdjustmentRequests
                 .Include(x => x.Booking)
@@ -41,7 +42,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.ApproveTimeAdjustment
                 throw new InvalidOperationException("Time adjustment can only be approved before booking completion.");
 
             adjustmentRequest.Status = BookingTimeAdjustmentStatus.Approved;
-            adjustmentRequest.CustomerAcknowledgedAt = DateTime.UtcNow;
+            adjustmentRequest.CustomerAcknowledgedAt = DateTime.Now;
 
             booking.EstimatedDurationHours += adjustmentRequest.RequestedAdditionalHrs;
             booking.EstimatedTotal += adjustmentRequest.AdditionalCostAmount;
@@ -51,7 +52,20 @@ namespace HEVEQ.Application.Features.Bookings.Commands.ApproveTimeAdjustment
             // EscrowRecords.AdjustmentRequestId should link the escrow modification to this request.
 
             await _context.SaveChangesAsync(cancellationToken);
-            return BookingDtoMapper.ToDto(booking);
+            return new TimeAdjustmentDecisionResponseDto
+            {
+                Id = adjustmentRequest.Id,
+                BookingId = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                RequestedAdditionalHours = adjustmentRequest.RequestedAdditionalHrs,
+                AdditionalCostAmount = adjustmentRequest.AdditionalCostAmount,
+                BookingEstimatedDurationHours = booking.EstimatedDurationHours,
+                BookingEstimatedTotal = booking.EstimatedTotal,
+                Status = adjustmentRequest.Status.ToString(),
+                StatusAr = TimeAdjustmentDisplayHelper.GetStatusAr(adjustmentRequest.Status),
+                CustomerAcknowledgedAt = adjustmentRequest.CustomerAcknowledgedAt,
+                Message = "Time adjustment request approved successfully"
+            };
         }
     }
 }

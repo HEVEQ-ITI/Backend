@@ -3,9 +3,6 @@ using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Application.Features.Bookings.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingById
 {
@@ -16,29 +13,34 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingById
         {
             _context = context;
         }
-
         public async Task<BookingDto> Handle(GetBookingByIdQuery request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
-                .Include(x => x.ServiceListing)
                 .AsNoTracking()
+                .Include(x => x.Customer)
+                .Include(x => x.AssignedOperator)
+                .Include(x => x.ServiceListing)
+                    .ThenInclude(x => x.ProviderProfile)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking is null)
                 throw new InvalidOperationException("Booking was not found.");
 
+            var isAdmin = string.Equals(request.Role, "Admin", StringComparison.OrdinalIgnoreCase);
+
             var isCustomerOwner = booking.CustomerId == request.UserId;
 
-            var providerProfile = await _context.ProviderProfiles
+            var isProviderOwner = await _context.ProviderProfiles
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+                .AnyAsync(x =>
+                    x.UserId == request.UserId &&
+                    x.Id == booking.ServiceListing.ProviderProfileId,
+                    cancellationToken);
 
-            var isProviderOwner = providerProfile is not null && booking.ServiceListing.ProviderProfileId == providerProfile.Id;
-
-            if (!isCustomerOwner && !isProviderOwner)
+            if (!isAdmin && !isCustomerOwner && !isProviderOwner)
                 throw new InvalidOperationException("You are not allowed to view this booking.");
 
-            return BookingDtoMapper.ToDto(booking);
+            return BookingDtoMapper.ToDto(booking, request.Role);
         }
     }
 }

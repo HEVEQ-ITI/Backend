@@ -3,6 +3,7 @@ using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using HEVEQ.Application.Features.Bookings.Helpers;
 
 namespace HEVEQ.Application.Features.Bookings.Queries.GetProviderBookings
 {
@@ -34,6 +35,7 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetProviderBookings
                 .Select(x => new
                 {
                     x.Id,
+                    x.BookingNumber,
                     CustomerName = x.Customer.FirstName + " " + x.Customer.LastName,
                     ServiceListingTitle = x.ServiceListing.Title,
                     x.RequestedStartDate,
@@ -47,7 +49,7 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetProviderBookings
             return bookings.Select(x => new ProviderBookingListItemDto
             {
                 BookingId = x.Id,
-                BookingNumber = "TEST", // Unique number will be created for display
+                BookingNumber = x.BookingNumber,
                 CustomerName = x.CustomerName.Trim(),
                 ServiceListingTitle = x.ServiceListingTitle,
                 RequestedStartDate = x.RequestedStartDate,
@@ -55,6 +57,7 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetProviderBookings
                 EstimatedDurationHours = x.EstimatedDurationHours,
                 EstimatedTotal = x.EstimatedTotal,
                 Status = x.Status.ToString(),
+                StatusAr = BookingDisplayHelper.GetStatusAr(x.Status),
                 CanAccept = x.Status == BookingStatus.PendingProviderResponse,
                 CanReject = x.Status == BookingStatus.PendingProviderResponse
             }).ToList();

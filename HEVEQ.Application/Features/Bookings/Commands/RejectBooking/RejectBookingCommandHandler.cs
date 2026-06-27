@@ -4,20 +4,21 @@ using HEVEQ.Application.Features.Bookings.Services;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using HEVEQ.Application.Features.Bookings.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.RejectBooking
 {
-    public sealed class RejectBookingCommandHandler : IRequestHandler<RejectBookingCommand, BookingDto>
+    public sealed class RejectBookingCommandHandler : IRequestHandler<RejectBookingCommand, RejectBookingResponseDto>
     {
         private readonly IApplicationDbContext _context;
         public RejectBookingCommandHandler(IApplicationDbContext context)
         {
             _context = context;
         }
-        public async Task<BookingDto> Handle(RejectBookingCommand request, CancellationToken cancellationToken)
+        public async Task<RejectBookingResponseDto> Handle(RejectBookingCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
                 .Include(x => x.ServiceListing)
@@ -29,6 +30,9 @@ namespace HEVEQ.Application.Features.Bookings.Commands.RejectBooking
             if (booking.Status != BookingStatus.PendingProviderResponse)
                 throw new InvalidOperationException("Only pending bookings can be rejected.");
 
+            if (string.IsNullOrWhiteSpace(request.reason))
+                throw new InvalidOperationException("Rejection reason is required.");
+
             var providerProfile = await _context.ProviderProfiles.FirstOrDefaultAsync(x => x.UserId == request.ProviderId, cancellationToken);
 
             if (providerProfile is null)
@@ -39,9 +43,17 @@ namespace HEVEQ.Application.Features.Bookings.Commands.RejectBooking
 
             booking.Status = BookingStatus.Rejected;
             booking.ProviderRejectionReason = request.reason;
+            booking.RejectedAt = DateTime.Now;
 
             await _context.SaveChangesAsync(cancellationToken);
-            return BookingDtoMapper.ToDto(booking);
+            return new RejectBookingResponseDto
+            {
+                Id = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                Status = booking.Status.ToString(),
+                StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
+                ProviderRejectionReason = booking.ProviderRejectionReason ?? string.Empty
+            };
         }
     }
 }

@@ -10,6 +10,8 @@ public class Booking
 
     public Guid CustomerId { get; set; }
 
+    public string BookingNumber { get; set; } = string.Empty;
+
     public Guid ServiceListingId { get; set; }
 
     public Guid? AssignedOperatorId { get; set; }
@@ -87,6 +89,7 @@ public class Booking
     public DateTime CreatedAt { get; set; }
 
     public DateTime? ConfirmedAt { get; set; }
+    public DateTime? RejectedAt { get; set; }
 
     public DateTime? PaymentCapturedAt { get; set; }
 

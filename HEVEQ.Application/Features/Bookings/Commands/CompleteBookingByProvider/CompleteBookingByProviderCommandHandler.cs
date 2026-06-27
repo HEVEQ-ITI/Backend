@@ -1,24 +1,22 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.DTOs;
-using HEVEQ.Application.Features.Bookings.Services;
+using HEVEQ.Application.Features.Bookings.Helpers;
+using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.CompleteBookingByProvider
 {
-    public sealed class CompleteBookingByProviderCommandHandler : IRequestHandler<CompleteBookingByProviderCommand, BookingDto>
+    public sealed class CompleteBookingByProviderCommandHandler : IRequestHandler<CompleteBookingByProviderCommand, CompleteBookingByProviderResponseDto>
     {
         private readonly IApplicationDbContext _context;
-
         public CompleteBookingByProviderCommandHandler(IApplicationDbContext context)
         {
             _context = context;
         }
-        public async Task<BookingDto> Handle(CompleteBookingByProviderCommand request, CancellationToken cancellationToken)
+
+        public async Task<CompleteBookingByProviderResponseDto> Handle(CompleteBookingByProviderCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
                 .Include(x => x.ServiceListing)
@@ -42,7 +40,8 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CompleteBookingByProvider
             if (booking.AssignedOperatorId is null)
                 throw new InvalidOperationException("Booking does not have an assigned operator.");
 
-            var assignment = await _context.OperatorAssignments.FirstOrDefaultAsync(x =>
+            var assignment = await _context.OperatorAssignments
+                .FirstOrDefaultAsync(x =>
                     x.BookingId == booking.Id &&
                     x.OperatorId == booking.AssignedOperatorId,
                     cancellationToken);
@@ -53,7 +52,33 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CompleteBookingByProvider
             if (assignment.Status != OperatorAssignmentStatus.InProgress)
                 throw new InvalidOperationException("Operator assignment must be in progress before completing the booking.");
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
+
+            var evidenceForm = new JobCompletionEvidenceForm
+            {
+                Id = Guid.NewGuid(),
+                BookingId = booking.Id,
+                SubmittedByUserId = request.ProviderUserId,
+                ProviderNotes = request.ProviderNotes,
+                Status = EvidenceFormStatus.Submitted,
+                SubmittedAt = now,
+                CreatedAt = now
+            };
+
+            foreach (var photo in request.Photos.OrderBy(x => x.DisplayOrder))
+            {
+                evidenceForm.Photos.Add(new JobCompletionEvidencePhoto
+                {
+                    Id = Guid.NewGuid(),
+                    FormId = evidenceForm.Id,
+                    PhotoUrl = photo.PhotoUrl,
+                    Caption = photo.Caption,
+                    DisplayOrder = photo.DisplayOrder,
+                    CreatedAt = now
+                });
+            }
+
+            _context.JobCompletionEvidenceForms.Add(evidenceForm);
 
             booking.Status = BookingStatus.PendingCustomerConfirmation;
             booking.CompletedMarkedAt = now;
@@ -67,7 +92,16 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CompleteBookingByProvider
             assignment.Status = OperatorAssignmentStatus.Completed;
 
             await _context.SaveChangesAsync(cancellationToken);
-            return BookingDtoMapper.ToDto(booking);
+
+            return new CompleteBookingByProviderResponseDto
+            {
+                Id = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                Status = booking.Status.ToString(),
+                StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
+                EvidenceFormId = evidenceForm.Id,
+                Message = "Completion submitted successfully"
+            };
         }
     }
 }
