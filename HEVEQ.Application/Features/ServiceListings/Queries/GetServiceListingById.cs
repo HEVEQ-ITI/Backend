@@ -50,7 +50,7 @@ public class GetServiceListingByIdQueryHandler(IApplicationDbContext context)
                         ListingId = p.ListingId,
                         PhotoUrl = p.PhotoUrl,
                         DisplayOrder = p.DisplayOrder
-                    }).ToList(), 
+                    }).ToList(),
                 Operators = l.ServiceListingOperators
                     .Select(slo => new ServiceListingOperatorDto
                     {
@@ -60,17 +60,22 @@ public class GetServiceListingByIdQueryHandler(IApplicationDbContext context)
                         Specialization = slo.Operator.Specialization,
                         LicenseType = slo.Operator.LicenseType
                     }).ToList(),
+       
                 Availability = l.Availability
                     .OrderBy(a => a.DayOfWeek)
-                    .Select(a => new ServiceListingAvailabilityDto
-                    {
-                        Id = a.Id,
-                        ListingId = a.ListingId,
-                        DayOfWeek = a.DayOfWeek,
-                        OpenTime = a.OpenTime,
-                        CloseTime = a.CloseTime
-                    }).ToList()
-            })
+                    .Select(a => new ServiceListingAvailabilityDto(
+                        a.Id,
+                        a.DayOfWeek,
+                        a.DayOfWeek == 0 ? "Sunday" :
+                        a.DayOfWeek == 1 ? "Monday" :
+                        a.DayOfWeek == 2 ? "Tuesday" :
+                        a.DayOfWeek == 3 ? "Wednesday" :
+                        a.DayOfWeek == 4 ? "Thursday" :
+                        a.DayOfWeek == 5 ? "Friday" : "Saturday", 
+                        a.OpenTime,
+                        a.CloseTime
+                    )).ToList()
+            }) 
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException(nameof(ServiceListing), request.Id);
 

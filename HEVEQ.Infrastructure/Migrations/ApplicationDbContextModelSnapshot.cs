@@ -1950,6 +1950,9 @@ namespace HEVEQ.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Governorate")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("HourlyRate")
                         .HasColumnType("decimal(10,2)");
 
@@ -1994,6 +1997,9 @@ namespace HEVEQ.Infrastructure.Migrations
 
                     b.Property<DateTime?>("QualityScoreComputedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Region")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("RejectedAt")
                         .HasColumnType("datetime2");

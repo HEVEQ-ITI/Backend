@@ -1,6 +1,22 @@
 ﻿using HEVEQ.Application.Features.ServiceListings.Commands;
+using HEVEQ.Application.Features.ServiceListings.Commands.AddBlackoutDate;
+using HEVEQ.Application.Features.ServiceListings.Commands.AddServiceListingAvailability;
+using HEVEQ.Application.Features.ServiceListings.Commands.AddServiceListingPhoto;
+using HEVEQ.Application.Features.ServiceListings.Commands.CreateServiceListing;
+using HEVEQ.Application.Features.ServiceListings.Commands.DeleteBlackoutDate;
+using HEVEQ.Application.Features.ServiceListings.Commands.DeleteServiceListing;
+using HEVEQ.Application.Features.ServiceListings.Commands.DeleteServiceListingAvailability;
+using HEVEQ.Application.Features.ServiceListings.Commands.DeleteServiceListingPhoto;
+using HEVEQ.Application.Features.ServiceListings.Commands.LinkOperatorToListing;
+using HEVEQ.Application.Features.ServiceListings.Commands.SubmitServiceListingForReview;
+using HEVEQ.Application.Features.ServiceListings.Commands.UnlinkOperatorFromListing;
+using HEVEQ.Application.Features.ServiceListings.Commands.UpdateServiceListing;
+using HEVEQ.Application.Features.ServiceListings.Commands.UpdateServiceListingAvailability;
 using HEVEQ.Application.Features.ServiceListings.DTOs;
 using HEVEQ.Application.Features.ServiceListings.Queries;
+using HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceListing;
+using HEVEQ.Application.Features.ServiceListings.Queries.GetProviderServiceListings;
+using HEVEQ.Application.Features.ServiceListings.Queries.PublicSearch;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,44 +35,73 @@ public class ServiceListingsController(ISender sender) : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Provider")]
-    public async Task<ActionResult<Guid>> Create(CreateServiceListingRequest request)
+    public async Task<ActionResult<CreateServiceListingResultDto>> Create([FromBody] CreateServiceListingCommand command)
     {
-        var id = await sender.Send(new CreateServiceListingCommand(request));
-        return CreatedAtAction(nameof(GetById), new { id }, id);
+        var result = await sender.Send(command);
+        return Ok(result);
     }
+
+    //[HttpGet]
+    //[Authorize(Roles = "Provider")]
+    //public async Task<ActionResult<List<ServiceListingDto>>> GetApproved()
+    //{
+    //    return await sender.Send(new GetApprovedServiceListingsQuery());
+    //}
+
+    //[HttpGet("{id:guid}")]
+    //[Authorize(Roles = "Provider")]
+    //public async Task<ActionResult<ServiceListingDetailDto>> GetById(Guid id)
+    //{
+    //    return await sender.Send(new GetServiceListingByIdQuery(id));
+    //}
+
+    //[HttpGet("/api/provider/service-listings")]
+    //[Authorize(Roles = "Provider")]
+    //public async Task<ActionResult<List<ServiceListingDto>>> GetMine()
+    //{
+    //    return await sender.Send(new GetProviderServiceListingsQuery());
+    //}
 
     [HttpGet]
     [Authorize(Roles = "Provider")]
-    public async Task<ActionResult<List<ServiceListingDto>>> GetApproved()
+    public async Task<ActionResult> GetApproved()
     {
-        return await sender.Send(new GetApprovedServiceListingsQuery());
+        var result = await sender.Send(new GetApprovedServiceListingsQuery());
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = "Provider")]
     public async Task<ActionResult<ServiceListingDetailDto>> GetById(Guid id)
     {
-        return await sender.Send(new GetServiceListingByIdQuery(id));
+        var result = await sender.Send(new GetServiceListingByIdQuery(id));
+        return Ok(result);
     }
 
     [HttpGet("/api/provider/service-listings")]
     [Authorize(Roles = "Provider")]
-    public async Task<ActionResult<List<ServiceListingDto>>> GetMine()
+    public async Task<ActionResult> GetMine()
     {
-        return await sender.Send(new GetProviderServiceListingsQuery());
+
+        var result = await sender.Send(new GetProviderServiceListingsQuery());
+        return Ok(result);
     }
+
+
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Provider")]
-    public async Task<IActionResult> Update(Guid id, UpdateServiceListingRequest request)
+    public async Task<ActionResult> Update(Guid id, [FromBody] UpdateServiceListingCommand command)
     {
-        await sender.Send(new UpdateServiceListingCommand(id, request));
+        if (id != command.Id) return BadRequest("Id mismatch");
+
+        await sender.Send(command);
         return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Provider")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<ActionResult> Delete(Guid id)
     {
         await sender.Send(new DeleteServiceListingCommand(id));
         return NoContent();
@@ -66,9 +111,11 @@ public class ServiceListingsController(ISender sender) : ControllerBase
 
     [HttpPost("{id:guid}/photos")]
     [Authorize(Roles = "Provider")]
-    public async Task<ActionResult<Guid>> AddPhoto(Guid id, AddPhotoRequest request)
+    public async Task<ActionResult<Guid>> AddPhoto(Guid id, [FromBody] AddServiceListingPhotoInput input)
     {
-        var photoId = await sender.Send(new AddServiceListingPhotoCommand(id, request));
+
+        var command = new AddServiceListingPhotoCommand(id, input.PhotoUrl, input.DisplayOrder);
+        var photoId = await sender.Send(command);
         return Ok(photoId);
     }
 
@@ -82,12 +129,13 @@ public class ServiceListingsController(ISender sender) : ControllerBase
 
     // ---------- Operators ----------
 
+
     [HttpPost("{id:guid}/operators")]
     [Authorize(Roles = "Provider")]
-    public async Task<IActionResult> LinkOperator(Guid id, LinkOperatorRequest request)
+    public async Task<IActionResult> LinkOperator(Guid id, [FromBody] Guid operatorId)
     {
-        await sender.Send(new LinkOperatorToListingCommand(id, request));
-        return NoContent();
+        var result = await sender.Send(new LinkOperatorToListingCommand(id, operatorId));
+        return Ok(result);
     }
 
     [HttpDelete("{id:guid}/operators/{operatorId:guid}")]
@@ -102,17 +150,20 @@ public class ServiceListingsController(ISender sender) : ControllerBase
 
     [HttpPost("{id:guid}/availability")]
     [Authorize(Roles = "Provider")]
-    public async Task<ActionResult<Guid>> AddAvailability(Guid id, AddAvailabilityRequest request)
+    public async Task<ActionResult<ServiceListingAvailabilityDto>> AddAvailability(Guid id, [FromBody] AddAvailabilityInput input)
     {
-        var availabilityId = await sender.Send(new AddServiceListingAvailabilityCommand(id, request));
-        return Ok(availabilityId);
+
+        var command = new AddServiceListingAvailabilityCommand(id, input.DayOfWeek, input.OpenTime, input.CloseTime);
+        var result = await sender.Send(command);
+        return Ok(result);
     }
 
     [HttpPut("{id:guid}/availability/{availabilityId:guid}")]
     [Authorize(Roles = "Provider")]
-    public async Task<IActionResult> UpdateAvailability(Guid id, Guid availabilityId, UpdateAvailabilityRequest request)
+    public async Task<IActionResult> UpdateAvailability(Guid id, Guid availabilityId, [FromBody] UpdateAvailabilityInput input)
     {
-        await sender.Send(new UpdateServiceListingAvailabilityCommand(id, availabilityId, request));
+        var command = new UpdateServiceListingAvailabilityCommand(id, availabilityId, input.DayOfWeek, input.OpenTime, input.CloseTime);
+        await sender.Send(command);
         return NoContent();
     }
 
@@ -128,10 +179,11 @@ public class ServiceListingsController(ISender sender) : ControllerBase
 
     [HttpPost("{id:guid}/blackout-dates")]
     [Authorize(Roles = "Provider")]
-    public async Task<ActionResult<Guid>> AddBlackoutDate(Guid id, AddBlackoutDateRequest request)
+    public async Task<ActionResult<BlackoutDateDto>> AddBlackoutDate(Guid id, [FromBody] AddBlackoutInput input)
     {
-        var blackoutDateId = await sender.Send(new AddBlackoutDateCommand(id, request));
-        return Ok(blackoutDateId);
+        var command = new AddBlackoutDateCommand(id, input.Date, input.Reason, input.OperatorId);
+        var result = await sender.Send(command);
+        return Ok(result);
     }
 
     [HttpDelete("{id:guid}/blackout-dates/{blackoutDateId:guid}")]
@@ -141,4 +193,61 @@ public class ServiceListingsController(ISender sender) : ControllerBase
         await sender.Send(new DeleteBlackoutDateCommand(id, blackoutDateId));
         return NoContent();
     }
+
+    // ---------- provider manage its listing  ----------
+    [HttpGet("/api/provider/service-listings/{id:guid}/manage")]
+    [Authorize(Roles = "Provider")]
+    public async Task<ActionResult<ManageServiceListingDto>> GetManageListing(
+            Guid id,
+            [FromHeader(Name = "Authorization")] string token)
+    {
+        var result = await sender.Send(new GetManageServiceListingQuery(id));
+        return Ok(result);
+    }
+
+
+    [HttpPost("{id:guid}/submit-for-review")]
+    [Authorize(Roles = "Provider")]
+    public async Task<ActionResult<SubmitForReviewResultDto>> SubmitForReview(Guid id)
+    {
+        
+            var result = await sender.Send(new SubmitServiceListingForReviewCommand(id));
+            return Ok(result);
+       }
+
+    /// ---------- search listings  ----------
+    [HttpGet("/api/public/search")]
+    [AllowAnonymous]
+    public async Task<ActionResult<PublicSearchResultDto>> PublicSearch([FromQuery] PublicSearchQuery query)
+    {
+        var result = await sender.Send(query);
+        return Ok(result);
+    }
+
+
+    //    [HttpGet("/api/public/search")]
+    //    [AllowAnonymous]
+    //    public async Task<ActionResult> PublicSearch([FromQuery] PublicSearchQuery query)
+    //    {
+    //        try
+    //        {
+    //            var result = await sender.Send(query);
+    //            return Ok(result);
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //                      return StatusCode(500, new
+    //            {
+    //                ErrorMessage = ex.Message,
+    //                InnerError = ex.InnerException?.Message,
+    //                StackTrace = ex.StackTrace
+    //            });
+    //        }
+    //    }
+    //}
 }
+
+    public record AddServiceListingPhotoInput(string PhotoUrl, int DisplayOrder);
+public record AddAvailabilityInput(int DayOfWeek, TimeOnly OpenTime, TimeOnly CloseTime);
+public record UpdateAvailabilityInput(int DayOfWeek, TimeOnly OpenTime, TimeOnly CloseTime);
+public record AddBlackoutInput(DateOnly Date, string? Reason, Guid? OperatorId);

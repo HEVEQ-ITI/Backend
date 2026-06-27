@@ -11,6 +11,8 @@ namespace HEVEQ.Application.Features.ServiceListings.DTOs
         public Guid ProviderProfileId { get; set; }
         public int CategoryId { get; set; }
         public string Title { get; set; } = string.Empty;
+        public string? Governorate { get; set; }
+        public string? Region { get; set; }
         public string? Tags { get; set; }
         public string? EquipmentModel { get; set; }
         public decimal? HourlyRate { get; set; }

@@ -1,9 +1,12 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using HEVEQ.Application.Features.ProviderProfiles.Commands.UpdateProviderProfile;
+﻿using HEVEQ.Application.Features.ProviderProfiles.Commands.UpdateProviderProfile;
 using HEVEQ.Application.Features.ProviderProfiles.Queries.GetProviderProfile;
 using HEVEQ.Application.Features.ProviderProfiles.Queries.GetProviderTrustHistory;
+using HEVEQ.Application.Features.ServiceListings.DTOs;
+using HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceListing;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 
 namespace HEVEQ.Api.Controllers;
 
@@ -41,4 +44,6 @@ public class ProviderProfileController : ControllerBase
         var result = await _mediator.Send(new GetProviderTrustHistoryQuery(), cancellationToken);
         return Ok(result);
     }
+
+
 }

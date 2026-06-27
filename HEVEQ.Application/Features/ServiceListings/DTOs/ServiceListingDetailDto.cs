@@ -12,6 +12,8 @@ namespace HEVEQ.Application.Features.ServiceListings.DTOs
         public int CategoryId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string? Governorate { get; set; }
+        public string? Region { get; set; }
         public string? Tags { get; set; }
         public string? EquipmentModel { get; set; }
         public string? EquipmentCapacity { get; set; }

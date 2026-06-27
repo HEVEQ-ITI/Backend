@@ -4,11 +4,12 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Categories.DTOs
 {
-    public record CategoryDto(
-        int Id,
-        string Name,
-        string Slug,
-        int Type,
-        int? ParentId
-    );
+    public class CategoryDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;       
+        public int? ParentId { get; set; }                      
+    }
 }

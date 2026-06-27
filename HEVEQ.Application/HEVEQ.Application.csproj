@@ -26,6 +26,7 @@
     <Folder Include="Common\Models\" />
     <Folder Include="Features\Auth\Query\" />
     <Folder Include="Features\Categories\Commands\" />
+    <Folder Include="Features\ProviderDashboard\Commands\" />
   </ItemGroup>
 
 </Project>
