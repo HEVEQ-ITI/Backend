@@ -6,6 +6,8 @@ namespace HEVEQ.Application.Features.Auth.DTOs
 {
     public class AuthResponse
     {
+        public bool ProfileCompleted { get; set; }
+        public string DisplayName { get; set; }
         public bool IsAuthenticated { get; set; }
         public string Message { get; set; }
 

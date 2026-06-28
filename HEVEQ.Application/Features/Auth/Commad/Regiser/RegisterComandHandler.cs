@@ -4,6 +4,7 @@ using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace HEVEQ.Application.Features.Auth.Commad.Regiser
 {
@@ -20,6 +21,9 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
 
             if (await userManager.FindByNameAsync(request.UserName) is not null)
                 return new AuthResponse { Message = "UserName is already exists" };
+            if (await userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == request.PhoneNumber) is not null)
+                return new AuthResponse { Message = "Phone number must be uniqe" };
+
 
             var user = new ApplicationUser
             {
@@ -28,7 +32,6 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 PhoneNumber = request.PhoneNumber,
-               
             };
 
             var result = await userManager.CreateAsync(user, request.Password);
@@ -40,7 +43,7 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
                 return new AuthResponse { Message = errors };
             }
 
-            var allowedRoles = new[] { "Customer", "Provider", "Employee" };
+            var allowedRoles = new[] { "Customer", "Provider"};
             var roleToAssign = allowedRoles.Contains(request.Role) ? request.Role : "Customer";
 
             if (!await roleManager.RoleExistsAsync(roleToAssign))
@@ -94,6 +97,7 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
 
             return new AuthResponse
             {
+                DisplayName = user.FirstName + " " + user.LastName,
                 UserId = user.Id,
                 Email = request.Email,
                 Roles = new List<string> { roleToAssign },
@@ -101,7 +105,8 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
                 IsAuthenticated = true,
                 ExpiresAt = refreshToken.ExpiresAt,
                 AccessToken = token,
-                RefreshToken = refreshToken.Token
+                RefreshToken = refreshToken.Token,
+                ProfileCompleted = false
             };
         }
     }
