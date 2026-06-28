@@ -26,4 +26,9 @@
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\HEVEQ.Application\HEVEQ.Application.csproj" />
+	  <ProjectReference Include="..\HEVEQ.Domain\HEVEQ.Domain.csproj" />
+	</ItemGroup>
+
 </Project>
