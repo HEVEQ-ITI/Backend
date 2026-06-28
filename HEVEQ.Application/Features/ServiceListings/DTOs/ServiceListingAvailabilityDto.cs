@@ -4,12 +4,10 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.ServiceListings.DTOs
 {
-    public class ServiceListingAvailabilityDto
-    {
-        public Guid Id { get; set; }
-        public Guid ListingId { get; set; }
-        public int DayOfWeek { get; set; }
-        public TimeOnly OpenTime { get; set; }
-        public TimeOnly CloseTime { get; set; }
-    }
+    public record ServiceListingAvailabilityDto(
+        Guid Id,
+        int DayOfWeek,
+        string DayName, 
+        TimeOnly OpenTime,
+        TimeOnly CloseTime);
 }

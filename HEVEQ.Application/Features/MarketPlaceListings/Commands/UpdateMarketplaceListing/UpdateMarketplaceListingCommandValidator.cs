@@ -9,7 +9,6 @@ namespace HEVEQ.Application.Features.MarketPlace.Commands.UpdateMarketplaceListi
     {
         public UpdateMarketplaceListingCommandValidator()
         {
-            RuleFor(x => x.SellerId).NotEmpty();
             RuleFor(x => x.Request.CategoryId).GreaterThan(0);
             RuleFor(x => x.Request.Title).NotEmpty().MaximumLength(200);
             RuleFor(x => x.Request.Description).NotEmpty();

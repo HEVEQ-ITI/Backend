@@ -16,6 +16,13 @@ namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
             RuleFor(x => x.BookingId)
                 .NotEmpty()
                 .WithMessage("BookingId is required.");
+
+            RuleFor(x => x.Reason)
+                .NotEmpty()
+                .MaximumLength(1000);
+
+            RuleForEach(x => x.EvidencePhotoUrls)
+                .MaximumLength(500);
         }
     }
 }

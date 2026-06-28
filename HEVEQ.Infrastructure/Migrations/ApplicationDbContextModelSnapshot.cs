@@ -190,6 +190,11 @@ namespace HEVEQ.Infrastructure.Migrations
                     b.Property<Guid?>("AssignedOperatorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("BookingNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<int?>("CancellationInitiatedByRole")
                         .HasColumnType("int");
 
@@ -300,6 +305,9 @@ namespace HEVEQ.Infrastructure.Migrations
                     b.Property<Guid?>("ReassignedToBookingId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateOnly>("RequestedStartDate")
                         .HasColumnType("date");
 
@@ -346,6 +354,9 @@ namespace HEVEQ.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedOperatorId");
+
+                    b.HasIndex("BookingNumber")
+                        .IsUnique();
 
                     b.HasIndex("CustomerId");
 
@@ -1950,6 +1961,9 @@ namespace HEVEQ.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Governorate")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("HourlyRate")
                         .HasColumnType("decimal(10,2)");
 
@@ -1994,6 +2008,9 @@ namespace HEVEQ.Infrastructure.Migrations
 
                     b.Property<DateTime?>("QualityScoreComputedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Region")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("RejectedAt")
                         .HasColumnType("datetime2");

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CancelMarketplaceOrder
 {
-    public record CancelMarketplaceOrderCommand(Guid OrderId, Guid UserId, CancelMarketplaceOrderRequest Request) : IRequest<MarketplaceOrderDto>;
+    public record CancelMarketplaceOrderCommand(Guid OrderId,CancelMarketplaceOrderRequest Request) : IRequest<MarketplaceOrderDto>;
     public record CancelMarketplaceOrderRequest(string? Reason);
 
 }

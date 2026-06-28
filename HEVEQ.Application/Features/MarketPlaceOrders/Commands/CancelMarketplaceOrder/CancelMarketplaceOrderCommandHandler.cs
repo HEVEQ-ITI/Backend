@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.MarketPlaceOrders.DTOs;
+using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -10,28 +12,34 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CancelMarketplaceOrder
 {
-    public class CancelMarketplaceOrderCommandHandler(IApplicationDbContext context, IMapper mapper) : IRequestHandler<CancelMarketplaceOrderCommand, MarketplaceOrderDto>
+    public class CancelMarketplaceOrderCommandHandler(IApplicationDbContext context, IMapper mapper, ICurrentUserService currentUser) : IRequestHandler<CancelMarketplaceOrderCommand, MarketplaceOrderDto>
     {
         public async Task<MarketplaceOrderDto> Handle(CancelMarketplaceOrderCommand request, CancellationToken cancellationToken)
         {
-            var order = await context.MarketplaceOrders
-             .Include(o => o.Listing).ThenInclude(l => l.Seller)
-             .Include(o => o.Buyer)
-             .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
-             ?? throw new KeyNotFoundException($"Order with ID {request.OrderId} was not found.");
+            if (!currentUser.UserId.HasValue)
+                throw new ForbiddenAccessException("User is not authenticated.");
 
-            var isBuyer = order.BuyerId == request.UserId;
-            var isSeller = order.Listing.SellerId == request.UserId;
+            var order = await context.MarketplaceOrders
+                .Include(o => o.Listing).ThenInclude(l => l.Seller)
+                .Include(o => o.Buyer)
+                .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
+                ?? throw new NotFoundException(nameof(MarketplaceOrder), request.OrderId);
+
+
+
+            var userId = currentUser.UserId.Value;
+            var isBuyer = order.BuyerId == userId;
+            var isSeller = order.Listing.SellerId == userId;
 
             if (!isBuyer && !isSeller)
-                throw new UnauthorizedAccessException("You are not authorized to cancel this order.");
+                throw new ForbiddenAccessException("You are not authorized to cancel this order.");
 
             if (order.Status == MarketplaceOrderStatus.Completed)
-                throw new InvalidOperationException("A completed order cannot be cancelled.");
+                throw new ValidationException("Status", "A completed order cannot be cancelled.");
 
             if (order.Status is MarketplaceOrderStatus.CancelledPreDispatch
                              or MarketplaceOrderStatus.CancelledPostDispatch)
-                throw new InvalidOperationException("This order has already been cancelled.");
+                throw new ValidationException("Status", "This order has already been cancelled.");
 
             var isPostDispatch = order.Status is MarketplaceOrderStatus.Dispatched
                                           or MarketplaceOrderStatus.Delivered;

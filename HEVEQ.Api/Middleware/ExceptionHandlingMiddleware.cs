@@ -28,6 +28,9 @@ public class ExceptionHandlingMiddleware
                 ForbiddenAccessException =>
                     (HttpStatusCode.Forbidden, (object)new { message = ex.Message }),
 
+                BadRequestException =>
+                (HttpStatusCode.BadRequest, (object)new { message = ex.Message }),
+
                 FluentValidation.ValidationException ve =>
                     (HttpStatusCode.BadRequest, (object)new
                     {
@@ -35,6 +38,11 @@ public class ExceptionHandlingMiddleware
                             .GroupBy(e => e.PropertyName)
                             .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
                     }),
+                ValidationException ve =>
+                   (HttpStatusCode.BadRequest, (object)new
+                   {
+                       errors = ve.Errors
+                   }),
 
                 _ =>
                     (HttpStatusCode.InternalServerError, (object)new { message = "An unexpected error occurred." })

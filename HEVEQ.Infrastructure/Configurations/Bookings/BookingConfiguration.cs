@@ -10,6 +10,8 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
     {
         builder.ToTable("Bookings");
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.BookingNumber).HasMaxLength(30).IsRequired();
+        builder.HasIndex(x => x.BookingNumber).IsUnique();
 
         builder.Property(x => x.JobTitle).HasMaxLength(200).IsRequired();
         builder.Property(x => x.JobDescription);

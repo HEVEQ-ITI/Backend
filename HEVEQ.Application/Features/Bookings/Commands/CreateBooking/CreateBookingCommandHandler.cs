@@ -3,10 +3,12 @@ using HEVEQ.Application.Features.Bookings.Services;
 using HEVEQ.Application.Features.Bookings.Services.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using HEVEQ.Application.Features.Bookings.DTOs;
+using HEVEQ.Application.Features.Bookings.Helpers;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.CreateBooking
 {
-    public sealed class CreateBookingCommandHandler : IRequestHandler<CreateBookingCommand, Guid>
+    public sealed class CreateBookingCommandHandler : IRequestHandler<CreateBookingCommand, CreateBookingResponseDto>
     {
         private readonly IApplicationDbContext _context;
         private readonly IBookingAddressResolver _addressResolver;
@@ -19,7 +21,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateBooking
             _bookingCreationService = bookingCreationService;
         }
 
-        public async Task<Guid> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
+        public async Task<CreateBookingResponseDto> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
             var customerExists = await _context.CustomerProfiles.AnyAsync(x => x.UserId == request.CustomerId, cancellationToken);
             if (!customerExists)
@@ -47,7 +49,21 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateBooking
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync(cancellationToken);
-            return booking.Id;
+            return new CreateBookingResponseDto
+            {
+                Id = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                Status = booking.Status.ToString(),
+                StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
+                ServiceTitle = listing.Title,
+                ProviderCompany = listing.ProviderProfile.CompanyName,
+                RequestedStartDate = booking.RequestedStartDate,
+                RequestedStartTime = booking.RequestedStartTime,
+                EstimatedDurationHours = booking.EstimatedDurationHours,
+                HourlyRateSnapshot = booking.HourlyRateSnapshot,
+                EstimatedTotal = booking.EstimatedTotal,
+                Message = "Booking request submitted successfully"
+            };
         }
     }
 }

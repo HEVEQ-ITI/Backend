@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Models;
 using HEVEQ.Application.Features.MarketPlace.DTOs;
 using HEVEQ.Domain.Enums;
 using MediatR;
@@ -11,24 +12,19 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlace.Queries.GetMarketplaceListings
 {
-    public class GetMarketPlaceListingsQueryHandler : IRequestHandler<GetMarketPlaceListingsQuery, IEnumerable<MarketPlaceListingDTO>>
+    public class GetMarketPlaceListingsQueryHandler(IApplicationDbContext context, IMapper mapper) : IRequestHandler<GetMarketPlaceListingsQuery, PagedResult<MarketPlaceListingDTO>>
     {
-        private readonly IApplicationDbContext _context;
-        private readonly IMapper _mapper;
+        public async Task<PagedResult<MarketPlaceListingDTO>> Handle(GetMarketPlaceListingsQuery request, CancellationToken cancellationToken)
+        {
+            var query = context.MarketplaceListings
+                .AsNoTracking()
+                .Where(l => l.Status == MarketplaceListingStatus.Active);
 
-        public GetMarketPlaceListingsQueryHandler(IApplicationDbContext context,IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-        public async Task<IEnumerable<MarketPlaceListingDTO>> Handle(GetMarketPlaceListingsQuery request, CancellationToken cancellationToken)
-        {
-            var query = _context.MarketplaceListings
-            .AsNoTracking()
-            .Where(l => l.Status == MarketplaceListingStatus.Active);       
-           
             if (request.CategoryId.HasValue)
                 query = query.Where(l => l.CategoryId == request.CategoryId.Value);
+
+            if (request.Condition.HasValue)
+                query = query.Where(l => l.Condition == request.Condition.Value);
 
             if (!string.IsNullOrWhiteSpace(request.Governorate))
                 query = query.Where(l => l.Governorate == request.Governorate);
@@ -43,15 +39,23 @@ namespace HEVEQ.Application.Features.MarketPlace.Queries.GetMarketplaceListings
                 query = query.Where(l => l.Title.Contains(request.Search));
 
             query = query.OrderByDescending(x => x.CreatedAt);
-            var pagedQuery = query
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize);
 
+            var totalCount = await query.CountAsync(cancellationToken);
 
-            return await pagedQuery
-            .ProjectTo<MarketPlaceListingDTO>(_mapper.ConfigurationProvider)
-            .ToListAsync(cancellationToken);
+            
+            var entities = await query
+                .Include(l => l.Seller)
+                .Include(l => l.Category)
+                .Include(l => l.Photos)
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<MarketPlaceListingDTO>
+            {
+                Items = mapper.Map<List<MarketPlaceListingDTO>>(entities),
+                TotalCount = totalCount
+            };
         }
-
     }
 }

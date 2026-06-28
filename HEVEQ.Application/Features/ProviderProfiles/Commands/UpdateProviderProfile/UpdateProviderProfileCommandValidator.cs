@@ -43,8 +43,7 @@ public class UpdateProviderProfileCommandValidator
 
         RuleFor(x => x.ServiceRadiusKm)
             .GreaterThan(0).WithMessage("Service radius must be greater than 0.")
-            .LessThanOrEqualTo(500).WithMessage("Service radius cannot exceed 500 km.");
-
+            .LessThanOrEqualTo(50).WithMessage("Service radius cannot exceed 50 km.");
         // ── Location — both must be provided together or not at all ───────
         RuleFor(x => x.BaseLongitude)
             .NotNull().WithMessage("Longitude is required when Latitude is provided.")

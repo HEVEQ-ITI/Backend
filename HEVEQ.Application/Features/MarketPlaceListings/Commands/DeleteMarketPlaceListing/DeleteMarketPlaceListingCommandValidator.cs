@@ -12,8 +12,7 @@ namespace HEVEQ.Application.Features.MarketPlace.Commands.DeleteMarketPlaceListi
             RuleFor(x => x.Id)
                 .NotEmpty().WithMessage("Listing ID is required.");
 
-            RuleFor(x => x.SellerId)
-                .NotEmpty().WithMessage("Seller ID is required.");
+           
         }
     }
 }

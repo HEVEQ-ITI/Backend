@@ -1,4 +1,5 @@
 ﻿using HEVEQ.Application.Features.MarketPlace.DTOs;
+using HEVEQ.Application.Features.MarketPlaceListings.DTOs;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using System;
@@ -7,7 +8,7 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlace.Commands.CreateMarketPlaceListing
 {
-    public record CreateMarketPlaceListingCommand(CreateMarketplaceListingRequest Request, Guid SellerId) : IRequest<Guid>;
+    public record CreateMarketPlaceListingCommand(CreateMarketplaceListingRequest Request) : IRequest<CreateMarketplaceListingResponse>;
     
 }
 
@@ -22,5 +23,4 @@ public record CreateMarketplaceListingRequest(
     bool IsNegotiable,
     MarketplaceTransactionMethod TransactionMethod,
     string Governorate,
-    string? District,
-    string? VideoUrl);
+    string? District);

@@ -6,5 +6,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
 {
-    public sealed record DisputeBookingCommand(Guid CustomerId, Guid BookingId) : IRequest<BookingDto>;
+    public sealed record DisputeBookingCommand(Guid CustomerId, Guid BookingId, string Reason, IReadOnlyList<string> EvidencePhotoUrls) : IRequest<DisputeBookingResponseDto>;
 }

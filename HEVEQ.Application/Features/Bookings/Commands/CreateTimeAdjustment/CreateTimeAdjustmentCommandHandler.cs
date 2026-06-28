@@ -1,4 +1,6 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Features.Bookings.DTOs;
+using HEVEQ.Application.Features.Bookings.Helpers;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
 using MediatR;
@@ -9,7 +11,7 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.CreateTimeAdjustment
 {
-    public sealed class CreateTimeAdjustmentCommandHandler : IRequestHandler<CreateTimeAdjustmentCommand, Guid>
+    public sealed class CreateTimeAdjustmentCommandHandler : IRequestHandler<CreateTimeAdjustmentCommand, CreateTimeAdjustmentResponseDto>
     {
         private readonly IApplicationDbContext _context;
 
@@ -18,7 +20,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateTimeAdjustment
             _context = context;
         }
 
-        public async Task<Guid> Handle(CreateTimeAdjustmentCommand request, CancellationToken cancellationToken)
+        public async Task<CreateTimeAdjustmentResponseDto> Handle(CreateTimeAdjustmentCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
                 .Include(x => x.ServiceListing)
@@ -57,12 +59,23 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateTimeAdjustment
                 AdditionalCostAmount = additionalCostAmount,
                 Status = BookingTimeAdjustmentStatus.Pending,
                 ProviderNote = request.Reason.Trim(),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.BookingTimeAdjustmentRequests.Add(adjustmentRequest);
             await _context.SaveChangesAsync(cancellationToken);
-            return adjustmentRequest.Id;
+            return new CreateTimeAdjustmentResponseDto
+            {
+                Id = adjustmentRequest.Id,
+                BookingId = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                RequestedAdditionalHours = adjustmentRequest.RequestedAdditionalHrs,
+                AdditionalCostAmount = adjustmentRequest.AdditionalCostAmount,
+                Status = adjustmentRequest.Status.ToString(),
+                StatusAr = TimeAdjustmentDisplayHelper.GetStatusAr(adjustmentRequest.Status),
+                ProviderNote = adjustmentRequest.ProviderNote ?? string.Empty,
+                Message = "Time adjustment request created successfully"
+            };
         }
     }
 }

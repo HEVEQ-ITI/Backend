@@ -6,5 +6,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingById
 {
-    public sealed record GetBookingByIdQuery(Guid UserId, Guid BookingId) : IRequest<BookingDto>;
+    public sealed record GetBookingByIdQuery(Guid UserId, string? Role, Guid BookingId) : IRequest<BookingDto>;
 }

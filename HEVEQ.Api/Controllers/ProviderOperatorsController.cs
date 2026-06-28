@@ -19,11 +19,12 @@ public class ProviderOperatorsController : ControllerBase
     {
         _mediator = mediator;
     }
-
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+           [FromQuery] bool includeInactive = false,
+           CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetProviderOperatorsQuery(), cancellationToken);
+        var result = await _mediator.Send(new GetProviderOperatorsQuery(includeInactive), cancellationToken);
         return Ok(result);
     }
 

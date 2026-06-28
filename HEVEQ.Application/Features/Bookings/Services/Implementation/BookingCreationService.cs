@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using NetTopologySuite.Geometries;
 using System.Text;
+using HEVEQ.Application.Common.Enums;
+using HEVEQ.Application.Common.Helpers;
 
 namespace HEVEQ.Application.Features.Bookings.Services.Implementation
 {
@@ -27,8 +29,11 @@ namespace HEVEQ.Application.Features.Bookings.Services.Implementation
             var surchargeAmount = zoneResult.OutOfZoneSurchargeAmount ?? 0m;
             var estimatedTotal = (hourlyRate * request.EstimatedDurationHours) + surchargeAmount;
 
+            var bookingId = Guid.NewGuid();
             return new Booking
             {
+                Id = bookingId,
+                BookingNumber = ReferenceNumberGenerator.Generate(ReferenceNumberType.Booking, bookingId),
                 CustomerId = request.CustomerId,
                 ServiceListingId = request.ServiceListingId,
                 JobTitle = request.JobTitle,

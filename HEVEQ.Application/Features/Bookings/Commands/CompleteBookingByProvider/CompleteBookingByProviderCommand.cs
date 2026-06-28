@@ -6,5 +6,9 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.CompleteBookingByProvider
 {
-    public sealed record CompleteBookingByProviderCommand(Guid ProviderUserId, Guid BookingId) : IRequest<BookingDto>;
+    public sealed record CompleteBookingByProviderCommand(
+        Guid ProviderUserId,
+        Guid BookingId,
+        string? ProviderNotes,
+        IReadOnlyList<CompletionEvidencePhotoDto> Photos) : IRequest<CompleteBookingByProviderResponseDto>;
 }

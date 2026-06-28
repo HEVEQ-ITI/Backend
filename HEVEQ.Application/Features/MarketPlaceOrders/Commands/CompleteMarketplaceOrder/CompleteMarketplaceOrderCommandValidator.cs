@@ -10,7 +10,6 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CompleteMarketpl
         public CompleteMarketplaceOrderCommandValidator()
         {
             RuleFor(x => x.OrderId).NotEmpty();
-            RuleFor(x => x.BuyerId).NotEmpty();
         }
 
     }

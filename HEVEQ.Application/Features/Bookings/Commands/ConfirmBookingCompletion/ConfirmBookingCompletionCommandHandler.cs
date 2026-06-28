@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.DTOs;
+using HEVEQ.Application.Features.Bookings.Helpers;
 using HEVEQ.Application.Features.Bookings.Services;
 using HEVEQ.Domain.Enums;
 using MediatR;
@@ -11,7 +12,7 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.ConfirmBookingCompletion
 {
-    public sealed class ConfirmBookingCompletionCommandHandler : IRequestHandler<ConfirmBookingCompletionCommand, BookingDto>
+    public sealed class ConfirmBookingCompletionCommandHandler : IRequestHandler<ConfirmBookingCompletionCommand, ConfirmBookingCompletionResponseDto>
     {
         private readonly IApplicationDbContext _context;
         public ConfirmBookingCompletionCommandHandler(IApplicationDbContext context)
@@ -19,7 +20,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.ConfirmBookingCompletion
             _context = context;
         }
 
-        public async Task<BookingDto> Handle(ConfirmBookingCompletionCommand request, CancellationToken cancellationToken)
+        public async Task<ConfirmBookingCompletionResponseDto> Handle(ConfirmBookingCompletionCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
                 .Include(x => x.ServiceListing)
@@ -49,8 +50,18 @@ namespace HEVEQ.Application.Features.Bookings.Commands.ConfirmBookingCompletion
             booking.Status = BookingStatus.Completed;
             booking.CompletionConfirmedAt = DateTime.Now;
 
+            //Payment will be done later
+
             await _context.SaveChangesAsync(cancellationToken);
-            return BookingDtoMapper.ToDto(booking);
+            return new ConfirmBookingCompletionResponseDto
+            {
+                Id = booking.Id,
+                BookingNumber = booking.BookingNumber,
+                Status = booking.Status.ToString(),
+                StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
+                CompletionConfirmedAt = booking.CompletionConfirmedAt,
+                Message = "Booking completion confirmed successfully"
+            };
         }
     }
 }

@@ -7,6 +7,7 @@ using HEVEQ.Application.Features.MarketPlaceOrders.Commands.DispatchMarketplaceO
 using HEVEQ.Application.Features.MarketPlaceOrders.DTOs;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetCustomerOrder;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketPlaceOrderById;
+using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceOrderTracking;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetProviderOrder;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HEVEQ.Api.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/marketplace-orders")]
     [ApiController]
     public class MarketPlaceOrderController : ControllerBase
@@ -26,75 +27,62 @@ namespace HEVEQ.Api.Controllers
         {
             _mediator = mediator;
         }
-        private Guid CurrentUserId => Guid.Parse("FC6FF724-CED5-468A-6964-08DED0682657");
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> Create(
+        public async Task<ActionResult<CreateMarketplaceOrderResponse>> Create(
         [FromBody] CreateMarketPlaceOrderRequest request, CancellationToken cancellationToken)
         {
-            var buyerId = CurrentUserId;
-            return Ok(await _mediator.Send(new CreateMarketPlaceOrderCommand(buyerId,request),cancellationToken));
-
-
+            return Ok(await _mediator.Send(new CreateMarketPlaceOrderCommand(request),cancellationToken));
         }
+
         [HttpGet("my/purchases")]
-        //[Authorize]
         public async Task<ActionResult<List<PurchaseOrderDto>>> GetMyPurchases(CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(new GetCustomerOrderQuery(CurrentUserId), cancellationToken);
+            var result = await _mediator.Send(new GetCustomerOrderQuery(), cancellationToken);
             return Ok(result);
         }
 
         [HttpGet("my/sales")]
-        //[Authorize]
         public async Task<ActionResult<List<SaleOrderDto>>> GetMySales(CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(new GetProviderOrderQuery(CurrentUserId), cancellationToken);
+            var result = await _mediator.Send(new GetProviderOrderQuery(), cancellationToken);
             return Ok(result);
         }
 
         [HttpGet("{id:guid}")]
-        //[Authorize]
         public async Task<IActionResult> GetOrderById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(new GetMarketplaceOrderByIdQuery(CurrentUserId, id), cancellationToken);
+            var result = await _mediator.Send(new GetMarketplaceOrderByIdQuery(id), cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("{id:guid}/seller-confirm")]
-        //[Authorize(Roles = "Provider")]
         public async Task<ActionResult<MarketplaceOrderDto>> SellerConfirm(Guid id, CancellationToken cancellationToken)
         {
-          Guid providerID= Guid.Parse("8E08BD4A-BCEC-4799-E8FF-08DED07104C1");
-
-        var result = await _mediator.Send(new ConfirmMarketplaceOrderCommand(id, providerID), cancellationToken);
+        var result = await _mediator.Send(new ConfirmMarketplaceOrderCommand(id), cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("{id:guid}/dispatch")]
-        //[Authorize(Roles = "Provider")]
         public async Task<ActionResult<MarketplaceOrderDto>> Dispatch(Guid id,[FromBody] DispatchMarketplaceOrderRequest request,CancellationToken cancellationToken)
         {
-            Guid providerID = Guid.Parse("8E08BD4A-BCEC-4799-E8FF-08DED07104C1");
 
-            var result = await _mediator.Send(new DispatchMarketplaceOrderCommand(id, providerID, request), cancellationToken);
+            var result = await _mediator.Send(new DispatchMarketplaceOrderCommand(id,request), cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("{id:guid}/deliver")]
-        //[Authorize(Roles = "Provider")]
         public async Task<ActionResult<MarketplaceOrderDto>> Deliver(Guid id, CancellationToken cancellationToken)
         {
-            Guid providerID = Guid.Parse("8E08BD4A-BCEC-4799-E8FF-08DED07104C1");
 
-            var result = await _mediator.Send(new DeliverMarketplaceOrderCommand(id, providerID), cancellationToken);
+            var result = await _mediator.Send(new DeliverMarketplaceOrderCommand(id), cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("{id:guid}/complete")]
         public async Task<ActionResult<MarketplaceOrderDto>> Complete(Guid id, CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(new CompleteMarketplaceOrderCommand(id, CurrentUserId), cancellationToken);
+            var result = await _mediator.Send(new CompleteMarketplaceOrderCommand(id), cancellationToken);
             return Ok(result);
         }
 
@@ -104,10 +92,16 @@ namespace HEVEQ.Api.Controllers
         [FromBody] CancelMarketplaceOrderRequest request,
         CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(new CancelMarketplaceOrderCommand(id, CurrentUserId, request), cancellationToken);
+            var result = await _mediator.Send(new CancelMarketplaceOrderCommand(id, request), cancellationToken);
             return Ok(result);
         }
 
+        [HttpGet("{id:guid}/tracking")]
+        public async Task<ActionResult<OrderTrackingDto>> GetTracking(Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetMarketplaceOrderTrackingQuery(id), cancellationToken);
+            return Ok(result);
+        }
 
 
 
