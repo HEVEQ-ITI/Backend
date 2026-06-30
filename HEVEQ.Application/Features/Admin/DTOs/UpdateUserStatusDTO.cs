@@ -9,6 +9,8 @@ namespace HEVEQ.Application.Features.Admin.DTOs
     {
         public Guid Id { get; set; }
         public bool IsActive { get; set; }
+        public string StatusText { get; set; }
+        public string StatusAr { get; set; }
         public string Message { get; set; }
 
         [JsonIgnore] public bool IsSuccess { get; set; }

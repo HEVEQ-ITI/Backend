@@ -19,33 +19,56 @@ namespace HEVEQ.Application.Features.Admin.Query.GetPendingMarketplaceListings
         public async Task<PaginatedPendingMarketplaceResponse> Handle(GetPendingMarketplaceListingsQuery request, CancellationToken cancellationToken)
         {
             var query = context.MarketplaceListings
-                .Include(m => m.Category)
-                .Where(m => m.Status == MarketplaceListingStatus.PendingReview)
-                .AsNoTracking();
+                 .Where(m => m.Status == MarketplaceListingStatus.PendingReview) // حسب المُسمى لديك
+                 .AsNoTracking();
 
             var totalCount = await query.CountAsync(cancellationToken);
 
-            var pagedListings = await query
+            var pagedData = await query
                 .OrderBy(m => m.CreatedAt)
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
+                .Select(m => new
+                {
+                    m.Id,
+                    m.Title,
+                    m.SellerId, 
+                    CategoryName = m.Category != null ? m.Category.Name : "Uncategorized",
+                    m.Price,
+                    PhotosCount = m.Photos.Count(), 
+
+                    m.AiRiskScore,
+                    m.AiRiskLevel,
+                    m.AiRiskFlags,
+                    m.CreatedAt
+                })
                 .ToListAsync(cancellationToken);
 
-            var ownerIds = pagedListings.Select(m => m.SellerId).Distinct().ToList();
+            if (!pagedData.Any())
+            {
+                return new PaginatedPendingMarketplaceResponse { TotalCount = totalCount };
+            }
 
-            var ownersDict = await userManager.Users
-                .Where(u => ownerIds.Contains(u.Id))
+            var userIds = pagedData.Select(x => x.SellerId).Distinct().ToList();
+
+            var usersDict = await userManager.Users
+                .Where(u => userIds.Contains(u.Id))
                 .ToDictionaryAsync(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim(), cancellationToken);
 
-            var items = pagedListings.Select(listing => new PendingMarketplaceListingDto
+            var items = pagedData.Select(x => new PendingMarketplaceListingDto
             {
-                Id = listing.Id,
-                Title = listing.Title,
-                OwnerName = ownersDict.ContainsKey(listing.SellerId) ? ownersDict[listing.SellerId] : "Unknown User",
-                CategoryName = listing.Category?.Name ?? "Uncategorized",
-                AiRiskScore = listing.AiRiskScore,
-                AiRiskLevel = listing.AiRiskLevel.ToString(),
-                SubmittedAt = listing.CreatedAt
+                Id = x.Id,
+                Title = x.Title,
+                OwnerName = usersDict.GetValueOrDefault(x.SellerId, "Unknown Owner"),
+                CategoryName = x.CategoryName,
+                Price = x.Price,
+                PhotosCount = x.PhotosCount,
+                AiRiskScore = x.AiRiskScore,
+                AiRiskLevel = x.AiRiskLevel ?? "N/A",
+                AiRiskFlags = !string.IsNullOrEmpty(x.AiRiskFlags) ? x.AiRiskFlags : "[]",
+                Status = "PendingReview",
+                StatusAr = "قيد المراجعة",
+                SubmittedAt = x.CreatedAt
             }).ToList();
 
             return new PaginatedPendingMarketplaceResponse

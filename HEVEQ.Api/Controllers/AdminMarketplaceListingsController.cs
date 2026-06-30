@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HEVEQ.Api.Controllers
 {
@@ -38,18 +39,18 @@ namespace HEVEQ.Api.Controllers
                 };
             }
 
-            return Ok(new
-            {
-                id = result.Id,
-                status = result.Status,
-                statusAr = result.StatusAr,
-                message = result.Message
-            });
+            return Ok(result);
         }
-
         [HttpPost("{id}/reject")]
         public async Task<IActionResult> RejectListing(Guid id, [FromBody] RejectMarketplaceListingCommand command)
         {
+
+            var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(adminIdString) && Guid.TryParse(adminIdString, out Guid adminIdGuid))
+            {
+                command.AdminId = adminIdGuid;
+            }
+
             command.Id = id;
 
             var result = await _mediator.Send(command);
@@ -64,13 +65,7 @@ namespace HEVEQ.Api.Controllers
                 };
             }
 
-            return Ok(new
-            {
-                id = result.Id,
-                status = result.Status,
-                statusAr = result.StatusAr,
-                adminRejectionNote = result.AdminRejectionNote
-            });
+            return Ok(result);
         }
     }
 }
