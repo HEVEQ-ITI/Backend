@@ -22,7 +22,13 @@ namespace HEVEQ.Api
 
             // Infrastructure Layer Dependencies
             builder.Services.AddInfrastructure(builder.Configuration);
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                  .AddJsonOptions(options =>
+                           {
+                    options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter()
+        );
+    });
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AngularClient", policy =>
