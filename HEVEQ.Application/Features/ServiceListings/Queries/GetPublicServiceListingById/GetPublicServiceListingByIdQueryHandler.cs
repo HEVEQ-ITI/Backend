@@ -51,6 +51,7 @@ public class GetPublicServiceListingByIdQueryHandler(IApplicationDbContext conte
 
         // 5. map provider summary details with fallbacks
         var providerDto = new PublicProviderSummaryDto(
+            ProviderProfileId: listing.ProviderProfileId,
             listing.ProviderProfile != null ? listing.ProviderProfile.CompanyName : "Unknown Provider",
             listing.ProviderProfile != null ? (double)listing.ProviderProfile.AverageRating : 0.0,
             listing.ProviderProfile != null ? listing.ProviderProfile.CompletedBookingsCount : 0,
@@ -60,6 +61,20 @@ public class GetPublicServiceListingByIdQueryHandler(IApplicationDbContext conte
 
         // 6. map availability list (mocked or mapped based on project stage)
         var availability = new List<PublicAvailabilityDto>();
+
+
+        // 7. live, listing-specific review aggregate
+
+        var listingReviews = await context.Reviews
+                            .AsNoTracking()
+                            .Where(r => r.ServiceListingId == listing.Id && r.IsPublished)
+                            .Select(r => r.Rating)
+                            .ToListAsync(cancellationToken);
+
+        var reviewsSummary = new PublicReviewsSummaryDto(
+            AverageRating: listingReviews.Count > 0 ? listingReviews.Average() : 0.0,
+            TotalReviewsCount: listingReviews.Count
+        );
 
         // 7. compose final structural public detail dto
         return new PublicServiceListingDetailDto(
@@ -78,6 +93,7 @@ public class GetPublicServiceListingByIdQueryHandler(IApplicationDbContext conte
             availability,
             providerDto,
             operators,
+            reviewsSummary,
             true // canRequestBooking default flag
         );
     }

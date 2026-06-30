@@ -20,6 +20,7 @@ public record PublicServiceListingDetailDto(
     List<PublicAvailabilityDto> Availability,
     PublicProviderSummaryDto Provider,
     List<PublicOperatorSummaryDto> Operators,
+    PublicReviewsSummaryDto ReviewsSummary,
     bool CanRequestBooking
 );
 
