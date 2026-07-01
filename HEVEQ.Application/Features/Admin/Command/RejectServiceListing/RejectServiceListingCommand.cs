@@ -9,8 +9,9 @@ namespace HEVEQ.Application.Features.Admin.Command.RejectServiceListing
 {
     public class RejectServiceListingCommand : IRequest<RejectServiceListingResponse>
     {
-        [JsonIgnore]
-        public Guid Id { get; set; }
+        [JsonIgnore] public Guid Id { get; set; }
+        [JsonIgnore] public Guid AdminId { get; set; } 
+
         public string AdminRejectionNote { get; set; }
     }
 }

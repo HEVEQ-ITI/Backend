@@ -14,7 +14,6 @@ namespace HEVEQ.Application.Features.Admin.Command.UpdateUserStatus
     {
         public async Task<UpdateUserStatusDTO> Handle(UpdateUserStatusCommand request, CancellationToken cancellationToken)
         {
-            // 1. قاعدة العمل: Admin لا يوقف نفسه
             if (request.TargetUserId == request.AdminId)
             {
                 return new UpdateUserStatusDTO
@@ -25,7 +24,6 @@ namespace HEVEQ.Application.Features.Admin.Command.UpdateUserStatus
                 };
             }
 
-            // 2. جلب المستخدم المستهدف بأمان باستخدام Guid
             var targetUser = await userManager.Users
                 .FirstOrDefaultAsync(u => u.Id == request.TargetUserId, cancellationToken);
 
@@ -34,19 +32,14 @@ namespace HEVEQ.Application.Features.Admin.Command.UpdateUserStatus
                 return new UpdateUserStatusDTO { IsSuccess = false, StatusCode = 404, Message = "User not found." };
             }
 
-            // 3. قاعدة العمل: لا يتم Physical Delete (فقط تحديث الحالة)
             targetUser.IsActive = request.IsActive;
+
 
             var result = await userManager.UpdateAsync(targetUser);
 
             if (!result.Succeeded)
             {
-                return new UpdateUserStatusDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = 500,
-                    Message = "Failed to update user status."
-                };
+                return new UpdateUserStatusDTO { IsSuccess = false, StatusCode = 500, Message = "Failed to update user status." };
             }
 
             return new UpdateUserStatusDTO
@@ -55,6 +48,8 @@ namespace HEVEQ.Application.Features.Admin.Command.UpdateUserStatus
                 StatusCode = 200,
                 Id = targetUser.Id,
                 IsActive = targetUser.IsActive,
+                StatusText = targetUser.IsActive ? "Active" : "Suspended",
+                StatusAr = targetUser.IsActive ? "نشط" : "موقوف",
                 Message = "User status updated successfully"
             };
         }
