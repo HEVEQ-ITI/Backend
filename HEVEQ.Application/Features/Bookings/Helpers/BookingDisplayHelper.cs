@@ -4,7 +4,7 @@ namespace HEVEQ.Application.Features.Bookings.Helpers;
 
 public static class BookingDisplayHelper
 {
-    public static string GetStatusAr(BookingStatus status)
+    public static string GetStatusAr(this BookingStatus status)
     {
         return status switch
         {
