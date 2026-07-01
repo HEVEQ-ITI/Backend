@@ -11,14 +11,27 @@ namespace HEVEQ.Application.Features.Bookings.Services
             var isCustomer = string.Equals(role, "Customer", StringComparison.OrdinalIgnoreCase);
             var isProvider = string.Equals(role, "Provider", StringComparison.OrdinalIgnoreCase);
             var isAdmin = string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase);
+            var escrow = booking.EscrowRecords.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
 
+            var actions = new BookingActionsDto
+            {
+                CanAccept = isProvider && BookingActionsHelper.CanProviderAccept(booking.Status),
+                CanReject = isProvider && BookingActionsHelper.CanProviderReject(booking.Status),
+                CanStart = isProvider && BookingActionsHelper.CanProviderStart(booking.Status, booking.AssignedOperatorId),
+                CanComplete = isProvider && BookingActionsHelper.CanProviderComplete(booking.Status),
+                CanProviderCancel = isProvider && BookingActionsHelper.CanProviderCancel(booking.Status),
+                CanConfirmCompletion = isCustomer && BookingActionsHelper.CanCustomerConfirmCompletion(booking.Status),
+                CanDispute = isCustomer && BookingActionsHelper.CanCustomerDispute(booking.Status),
+                CanCancel = isCustomer && BookingActionsHelper.CanCustomerCancel(booking.Status),
+                CanPay = isCustomer && BookingActionsHelper.CanCustomerPay(booking.Status),
+            };
             return new BookingDto
             {
                 Id = booking.Id,
                 BookingNumber = booking.BookingNumber,
 
                 ServiceListingId = booking.ServiceListingId,
-                ServiceListingTitle = booking.ServiceListing?.Title ?? string.Empty,
+                ServiceTitle = booking.ServiceListing?.Title ?? string.Empty,
 
                 CustomerId = booking.CustomerId,
                 CustomerName = booking.Customer is null ? string.Empty : $"{booking.Customer.FirstName} {booking.Customer.LastName}".Trim(),
@@ -26,19 +39,11 @@ namespace HEVEQ.Application.Features.Bookings.Services
                 ProviderCompany = booking.ServiceListing?.ProviderProfile?.CompanyName ?? string.Empty,
 
                 AssignedOperatorId = booking.AssignedOperatorId,
-                AssignedOperatorName = booking.AssignedOperator?.FullName,
+                OperatorName = booking.AssignedOperator?.FullName,
 
-                Actions = new BookingActionsDto
-                {
-                    CanAccept = isProvider && BookingActionsHelper.CanProviderAccept(booking.Status),
-                    CanReject = isProvider && BookingActionsHelper.CanProviderReject(booking.Status),
-                    CanStart = isProvider && BookingActionsHelper.CanProviderStart(booking.Status, booking.AssignedOperatorId),
-                    CanComplete = isProvider && BookingActionsHelper.CanProviderComplete(booking.Status),
-
-                    CanConfirmCompletion = isCustomer && BookingActionsHelper.CanCustomerConfirmCompletion(booking.Status),
-                    CanDispute = isCustomer && BookingActionsHelper.CanCustomerDispute(booking.Status),
-                    CanCancel = isCustomer && BookingActionsHelper.CanCustomerCancel(booking.Status)
-                },
+                AvailableActions = actions,
+                EscrowStatus = escrow?.Status.ToString(),
+                EscrowStatusAr = escrow is null ? string.Empty : EscrowDisplayHelper.GetStatusAr(escrow.Status),
 
                 Timeline = BookingTimelineHelper.Build(booking),
 

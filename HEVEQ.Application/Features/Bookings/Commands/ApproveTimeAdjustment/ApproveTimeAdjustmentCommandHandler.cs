@@ -57,7 +57,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.ApproveTimeAdjustment
                 Id = adjustmentRequest.Id,
                 BookingId = booking.Id,
                 BookingNumber = booking.BookingNumber,
-                RequestedAdditionalHours = adjustmentRequest.RequestedAdditionalHrs,
+                RequestedAdditionalHrs = adjustmentRequest.RequestedAdditionalHrs,
                 AdditionalCostAmount = adjustmentRequest.AdditionalCostAmount,
                 BookingEstimatedDurationHours = booking.EstimatedDurationHours,
                 BookingEstimatedTotal = booking.EstimatedTotal,

@@ -6,11 +6,9 @@ namespace HEVEQ.Application.Features.Bookings.DTOs
 {
     public class ConfirmBookingCompletionResponseDto
     {
-        public Guid Id { get; set; }
-        public string BookingNumber { get; set; } = string.Empty;
+        public Guid BookingId { get; set; }
         public string Status { get; set; } = string.Empty;
         public string StatusAr { get; set; } = string.Empty;
-        public DateTime? CompletionConfirmedAt { get; set; }
         public string Message { get; set; } = string.Empty;
     }
 }

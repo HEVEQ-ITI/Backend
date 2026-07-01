@@ -1,6 +1,8 @@
-﻿using HEVEQ.Application.Features.MarketPlaceOrders.Commands.CancelMarketplaceOrder;
+﻿using HEVEQ.Api.Requests.Payments;
+using HEVEQ.Application.Features.MarketPlaceOrders.Commands.CancelMarketplaceOrder;
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.CompleteMarketplaceOrder;
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.ConfirmMarketPlaceOrder;
+using HEVEQ.Application.Features.MarketPlaceOrders.Commands.ConfirmMarketplaceOrderPayment;
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.CreateMarketPlaceOrder;
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.DeliverMarketplaceOrder;
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.DispatchMarketplaceOrder;
@@ -11,6 +13,7 @@ using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceEscrow;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketPlaceOrderById;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceOrderTracking;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetProviderOrder;
+using HEVEQ.Application.Features.MarketPlaceOrders.Commands.CheckoutMarketplaceOrderPayment;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
@@ -104,11 +107,25 @@ namespace HEVEQ.Api.Controllers
             var result = await _mediator.Send(new GetMarketplaceOrderTrackingQuery(id), cancellationToken);
             return Ok(result);
         }
+        [HttpPost("{id:guid}/payment/checkout")]
+        [Authorize(Roles = "Customer")]
+        public async Task<ActionResult<MarketplaceOrderPaymentCheckoutResponseDto>> CheckoutMarketplaceOrderPayment([FromRoute] Guid id, [FromBody] PaymentCheckoutRequest request, CancellationToken cancellationToken)
+        {
+            var command = new CheckoutMarketplaceOrderPaymentCommand(id, request.PaymentMethod, request.SuccessUrl, request.CancelUrl);
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(result);
+        }
 
         [HttpPost("{id:guid}/dispute")]
         public async Task<ActionResult<OpenDisputeResponse>> OpenDispute(Guid id, [FromBody] OpenDisputeRequest request, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new OpenMarketplaceOrderDisputeCommand(id, request), cancellationToken);
+        [HttpPost("{id:guid}/payment/mock-confirm")]
+        [Authorize(Roles = "Customer")]
+        public async Task<ActionResult<MarketplaceOrderPaymentConfirmResponseDto>> ConfirmMarketplaceOrderPaymentForDemo([FromRoute] Guid id, [FromBody] PaymentConfirmRequest request, CancellationToken cancellationToken)
+        {
+            var command = new ConfirmMarketplaceOrderPaymentCommand(id, request.PaymentGatewayReference);
+            var result = await _mediator.Send(command, cancellationToken);
             return Ok(result);
         }
 

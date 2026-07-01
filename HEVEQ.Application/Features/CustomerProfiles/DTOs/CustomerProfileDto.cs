@@ -4,11 +4,13 @@ public class CustomerProfileDto
 {
     // From ApplicationUser — editable
     public Guid UserId { get; set; }
+    public string DisplayName { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
+    public bool IsPhoneVerified { get; set; }
     public AddressDto? DefaultAddress { get; set; }  // null if not set yet
 
     // From CustomerProfile — READ ONLY, system computed

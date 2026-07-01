@@ -25,7 +25,9 @@
   <ItemGroup>
     <Folder Include="Features\Auth\Query\" />
     <Folder Include="Features\Categories\Commands\" />
+    <Folder Include="Features\ProviderCalendar\Commands\" />
     <Folder Include="Features\ProviderDashboard\Commands\" />
+    <Folder Include="Features\ProviderEarnings\Commands\" />
   </ItemGroup>
 
 </Project>

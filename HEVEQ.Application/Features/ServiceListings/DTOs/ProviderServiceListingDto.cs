@@ -13,6 +13,8 @@ namespace HEVEQ.Application.Features.ServiceListings.DTOs
         string Status,
         string StatusAr,
         int QualityScore,
+        int? AiRiskScore,        
+        string? AiRiskLevel,
         int PhotosCount,
         int OperatorsCount,
         int AvailabilityCount,

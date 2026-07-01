@@ -9,8 +9,8 @@ namespace HEVEQ.Application.Features.Admin.Command.RejectMarketplaceListing
 {
     public class RejectMarketplaceListingCommand : IRequest<RejectMarketplaceListingResponse>
     {
-        [JsonIgnore] 
-        public Guid Id { get; set; }
+        [JsonIgnore] public Guid Id { get; set; }
+        [JsonIgnore] public Guid AdminId { get; set; }
 
         public string AdminRejectionNote { get; set; }
     }

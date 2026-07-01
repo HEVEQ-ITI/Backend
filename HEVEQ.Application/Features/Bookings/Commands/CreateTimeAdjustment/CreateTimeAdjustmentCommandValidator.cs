@@ -17,16 +17,16 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateTimeAdjustment
                 .NotEmpty()
                 .WithMessage("BookingId is required.");
 
-            RuleFor(x => x.AdditionalHours)
+            RuleFor(x => x.RequestedAdditionalHrs)
                 .GreaterThan(0)
-                .WithMessage("Additional hours must be greater than 0.");
+                .WithMessage("Requested additional hours must be greater than 0.");
             //ممكن نظبط جزء الساعات لو مش عايزينه يزود عن حد معين
 
-            RuleFor(x => x.Reason)
+            RuleFor(x => x.ProviderNote)
                 .NotEmpty()
-                .WithMessage("Reason is required.")
+                .WithMessage("ProviderNote is required.")
                 .MaximumLength(500)
-                .WithMessage("Reason cannot exceed 500 characters.");
+                .WithMessage("ProviderNote cannot exceed 500 characters.");
         }
     }
 }

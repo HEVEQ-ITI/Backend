@@ -6,5 +6,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.CreateTimeAdjustment
 {
-    public sealed record CreateTimeAdjustmentCommand(Guid ProviderUserId, Guid BookingId, decimal AdditionalHours, string Reason) : IRequest<CreateTimeAdjustmentResponseDto>;
+    public sealed record CreateTimeAdjustmentCommand(Guid ProviderUserId, Guid BookingId, decimal RequestedAdditionalHrs, string ProviderNote) : IRequest<CreateTimeAdjustmentResponseDto>;
 }

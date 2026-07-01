@@ -7,8 +7,18 @@ namespace HEVEQ.Api.Middleware;
 public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+    private readonly IHostEnvironment _env;
 
-    public ExceptionHandlingMiddleware(RequestDelegate next) => _next = next;
+    public ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger,
+        IHostEnvironment env)
+    {
+        _next = next;
+        _logger = logger;
+        _env = env;
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -18,6 +28,13 @@ public class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
+            // Always log the FULL exception (type, message, stack trace, inner exception).
+            // The response body intentionally stays generic for unexpected errors —
+            // but we must never lose the real error from the server console/logs.
+            _logger.LogError(ex,
+                "Unhandled exception on {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+
             context.Response.ContentType = "application/json";
 
             var (statusCode, payload) = ex switch
@@ -45,7 +62,16 @@ public class ExceptionHandlingMiddleware
                    }),
 
                 _ =>
-                    (HttpStatusCode.InternalServerError, (object)new { message = "An unexpected error occurred." })
+                    (HttpStatusCode.InternalServerError, _env.IsDevelopment()
+                        ? (object)new
+                        {
+                            message = "An unexpected error occurred.",
+                            exceptionType = ex.GetType().FullName,
+                            exceptionMessage = ex.Message,
+                            innerException = ex.InnerException?.Message,
+                            stackTrace = ex.StackTrace
+                        }
+                        : (object)new { message = "An unexpected error occurred." })
             };
 
             context.Response.StatusCode = (int)statusCode;

@@ -14,9 +14,8 @@ namespace HEVEQ.Application.Features.Admin.Command.ApproveServiceListing
     {
         public async Task<ApproveServiceListingResponse> Handle(ApproveServiceListingCommand request, CancellationToken cancellationToken)
         {
-            // 1. جلب الخدمة
-            var listing = await context.ServiceListings
-                .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
+            var listing = await context.ServiceListings.Include(x=>x.Availability)
+                 .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
 
             if (listing == null)
             {
@@ -29,22 +28,47 @@ namespace HEVEQ.Application.Features.Admin.Command.ApproveServiceListing
                 {
                     IsSuccess = false,
                     StatusCode = 400,
-                    Message = $"Cannot approve listing. Current status is {listing.Status}."
+                    Message = "Only listings in 'PendingReview' status can be approved."
+                };
+            }
+
+            
+            bool hasPhotos = listing.Photos != null && listing.Photos.Count > 0;
+            bool hasOperatorInfo = listing.QsOperator> 0;
+            bool hasAvailability = listing.Availability.Count() > 0;
+
+            if (!hasPhotos || !hasOperatorInfo || !hasAvailability)
+            {
+                return new ApproveServiceListingResponse
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Message = "Cannot approve listing. Minimum requirements are missing (Photos, Operator, or Availability details)."
                 };
             }
 
             listing.Status = ServiceListingStatus.Active;
 
-            listing.EmbeddingStatus = EmbeddingStatus.Pending;
-
             await context.SaveChangesAsync(cancellationToken);
 
+            // 6. إنشاء Notification للـ Provider لو الخدمة جاهزة (لو الـ Service محقونة وليست Null)
+            //if (notificationService != null)
+            //{
+            //    await notificationService.SendAsync(
+            //        userId: listing.ProviderId,
+            //        title: "تم قبول خدمتك",
+            //        message: $"تمت الموافقة على الخدمة '{listing.Title}' وهي الآن نشطة على المنصة."
+            //    );
+            //}
+
+            // 7. إرجاع المخرجات المتوقعة بدقة
             return new ApproveServiceListingResponse
             {
                 IsSuccess = true,
                 StatusCode = 200,
                 Id = listing.Id,
-                Status = "Active", 
+                Status = "Active",
+                StatusText = "Active",
                 StatusAr = "نشط",
                 Message = "Service listing approved successfully"
             };

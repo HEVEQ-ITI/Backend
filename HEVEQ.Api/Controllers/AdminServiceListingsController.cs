@@ -1,10 +1,12 @@
 ﻿using HEVEQ.Application.Features.Admin.Command.ApproveServiceListing;
 using HEVEQ.Application.Features.Admin.Command.RejectServiceListing;
 using HEVEQ.Application.Features.Admin.Query.GetPendingServiceListings;
+using HEVEQ.Application.Features.Admin.Query.GetServiceListingReviewDetails;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HEVEQ.Api.Controllers
 {
@@ -24,7 +26,6 @@ namespace HEVEQ.Api.Controllers
         public async Task<IActionResult> ApproveListing(Guid id)
         {
             var command = new ApproveServiceListingCommand { Id = id };
-
             var result = await _mediator.Send(command);
 
             if (!result.IsSuccess)
@@ -41,6 +42,7 @@ namespace HEVEQ.Api.Controllers
             {
                 id = result.Id,
                 status = result.Status,
+                statusText = result.StatusText,
                 statusAr = result.StatusAr,
                 message = result.Message
             });
@@ -49,8 +51,14 @@ namespace HEVEQ.Api.Controllers
         [HttpPost("{id}/reject")]
         public async Task<IActionResult> RejectListing(Guid id, [FromBody] RejectServiceListingCommand command)
         {
-            // دمج الـ ID من الرابط داخل الـ Command
+            var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(adminIdString) || !Guid.TryParse(adminIdString, out Guid adminIdGuid))
+            {
+                return Unauthorized(new { message = "Invalid Token Claims" });
+            }
+
             command.Id = id;
+            command.AdminId = adminIdGuid;
 
             var result = await _mediator.Send(command);
 
@@ -63,15 +71,30 @@ namespace HEVEQ.Api.Controllers
                     _ => StatusCode(500, new { message = result.Message })
                 };
             }
-
-            // إرجاع الـ JSON المطلوب بالضبط
             return Ok(new
             {
                 id = result.Id,
                 status = result.Status,
+                statusText = result.StatusText,
                 statusAr = result.StatusAr,
                 adminRejectionNote = result.AdminRejectionNote
             });
+        }
+
+
+        [HttpGet("{id}/review-details")]
+        public async Task<IActionResult> GetReviewDetails(Guid id)
+        {
+            var query = new GetServiceListingReviewDetailsQuery { Id = id };
+
+            var result = await _mediator.Send(query);
+
+            if (result == null)
+            {
+                return NotFound(new { message = "Service listing not found." });
+            }
+
+            return Ok(result);
         }
     }
 }

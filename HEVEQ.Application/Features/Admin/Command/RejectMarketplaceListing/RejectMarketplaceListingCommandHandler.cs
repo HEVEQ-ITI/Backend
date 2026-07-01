@@ -14,7 +14,7 @@ namespace HEVEQ.Application.Features.Admin.Command.RejectMarketplaceListing
     {
         public async Task<RejectMarketplaceListingResponse> Handle(RejectMarketplaceListingCommand request, CancellationToken cancellationToken)
         {
-            // 1. جلب العنصر المستهدف من جدول السوق
+
             var listing = await context.MarketplaceListings
                 .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
 
@@ -23,7 +23,6 @@ namespace HEVEQ.Application.Features.Admin.Command.RejectMarketplaceListing
                 return new RejectMarketplaceListingResponse { IsSuccess = false, StatusCode = 404, Message = "Marketplace listing not found." };
             }
 
-            // 2. التأكد من حالة العنصر (يجب أن يكون في انتظار المراجعة)
             if (listing.Status != MarketplaceListingStatus.PendingReview)
             {
                 return new RejectMarketplaceListingResponse
@@ -34,20 +33,29 @@ namespace HEVEQ.Application.Features.Admin.Command.RejectMarketplaceListing
                 };
             }
 
-            // 3. تحديث الحالة وإضافة سبب الرفض
             listing.Status = MarketplaceListingStatus.Rejected;
             listing.AdminRejectionNote = request.AdminRejectionNote;
 
-            // 4. حفظ التغييرات في قاعدة البيانات
+           
             await context.SaveChangesAsync(cancellationToken);
 
-            // 5. تجهيز وإرجاع النتيجة
+            // 3. إرسال الإشعار للبائع (Seller/Provider)
+            //if (notificationService != null)
+            //{
+            //    // بافتراض أن الكلاس يمتلك ProviderProfileId أو SellerProfileId والذي يمثل الـ UserId
+            //    await notificationService.SendAsync(
+            //        userId: listing.ProviderProfileId,
+            //        title: "تحديث بخصوص عرضك في السوق",
+            //        message: $"تم رفض عرضك '{listing.Title}' لسبب: {request.AdminRejectionNote}. يرجى التعديل وإعادة التقديم."
+            //    );
+            //}
+
             return new RejectMarketplaceListingResponse
             {
                 IsSuccess = true,
                 StatusCode = 200,
                 Id = listing.Id,
-                Status = "Rejected", // أو listing.ApprovalStatus.ToString()
+                Status = "Rejected",
                 StatusAr = "مرفوض",
                 AdminRejectionNote = listing.AdminRejectionNote
             };
