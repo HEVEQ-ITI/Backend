@@ -120,6 +120,8 @@ namespace HEVEQ.Api.Controllers
         public async Task<ActionResult<OpenDisputeResponse>> OpenDispute(Guid id, [FromBody] OpenDisputeRequest request, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new OpenMarketplaceOrderDisputeCommand(id, request), cancellationToken);
+            return Ok(result);
+        }
         [HttpPost("{id:guid}/payment/mock-confirm")]
         [Authorize(Roles = "Customer")]
         public async Task<ActionResult<MarketplaceOrderPaymentConfirmResponseDto>> ConfirmMarketplaceOrderPaymentForDemo([FromRoute] Guid id, [FromBody] PaymentConfirmRequest request, CancellationToken cancellationToken)
