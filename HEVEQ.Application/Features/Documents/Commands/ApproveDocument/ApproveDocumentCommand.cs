@@ -6,6 +6,6 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Documents.Commands.ApproveDocument
 {
-    public record ApproveDocumentCommand(Guid DocumentId) : IRequest<DocumentDto>;
+    public record ApproveDocumentCommand(Guid DocumentId) : IRequest<ApproveDocumentResponse>;
     
 }

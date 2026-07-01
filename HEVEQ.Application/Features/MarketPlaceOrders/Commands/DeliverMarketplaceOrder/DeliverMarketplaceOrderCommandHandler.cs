@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Localization;
+using HEVEQ.Application.Features.MarketPlaceOrders.Common;
 using HEVEQ.Application.Features.MarketPlaceOrders.DTOs;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
@@ -12,16 +14,15 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.DeliverMarketplaceOrder
 {
-    public class DeliverMarketplaceOrderCommandHandler(IApplicationDbContext context, IMapper mapper, ICurrentUserService currentUser) : IRequestHandler<DeliverMarketplaceOrderCommand, MarketplaceOrderDto>
+    public class DeliverMarketplaceOrderCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser) : IRequestHandler<DeliverMarketplaceOrderCommand, OrderActionResponse>
     {
-        public async Task<MarketplaceOrderDto> Handle(DeliverMarketplaceOrderCommand request, CancellationToken cancellationToken)
+        public async Task<OrderActionResponse> Handle(DeliverMarketplaceOrderCommand request, CancellationToken cancellationToken)
         {
             if (!currentUser.UserId.HasValue)
                 throw new ForbiddenAccessException("User is not authenticated.");
 
             var order = await context.MarketplaceOrders
-                .Include(o => o.Listing).ThenInclude(l => l.Seller)
-                .Include(o => o.Buyer)
+                .Include(o => o.Listing)
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
                 ?? throw new NotFoundException(nameof(MarketplaceOrder), request.OrderId);
 
@@ -35,9 +36,16 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.DeliverMarketpla
             order.Status = MarketplaceOrderStatus.Delivered;
             order.DeliveredAt = DateTime.UtcNow;
 
-            await context.SaveChangesAsync(cancellationToken);
-            return mapper.Map<MarketplaceOrderDto>(order);
+            OrderNotifier.Notify(context, order.BuyerId, "OrderDelivered",
+                 "Order delivered", $"Your order {order.OrderNumber} has been marked as delivered.", order.Id);
 
+            await context.SaveChangesAsync(cancellationToken);
+
+            return new OrderActionResponse(
+                order.Id,
+                order.Status.ToString(),
+                order.Status.ToArabic(), 
+                "Order marked as delivered successfully");
         }
     }
 }

@@ -1320,6 +1320,11 @@ namespace HEVEQ.Infrastructure.Migrations
                     b.Property<Guid>("ListingId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<DateTime?>("ReturnShippingAcceptedByBuyerAt")
                         .HasColumnType("datetime2");
 
@@ -1337,6 +1342,9 @@ namespace HEVEQ.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
 
                     b.HasIndex("BuyerId", "Status");
 

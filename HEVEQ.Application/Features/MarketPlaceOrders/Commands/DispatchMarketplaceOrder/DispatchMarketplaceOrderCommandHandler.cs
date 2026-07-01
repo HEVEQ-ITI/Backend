@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
+using HEVEQ.Application.Common.Enums;
 using HEVEQ.Application.Common.Exceptions;
+using HEVEQ.Application.Common.Helpers;
 using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Localization;
 using HEVEQ.Application.Features.MarketPlaceOrders.Common;
 using HEVEQ.Application.Features.MarketPlaceOrders.DTOs;
 using HEVEQ.Domain.Entities;
@@ -14,16 +17,15 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.DispatchMarketplaceOrder
 {
-    public class DispatchMarketplaceOrderCommandHandler(IApplicationDbContext context, IMapper mapper, ICurrentUserService currentUser) : IRequestHandler<DispatchMarketplaceOrderCommand, MarketplaceOrderDto>
+    public class DispatchMarketplaceOrderCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser) : IRequestHandler<DispatchMarketplaceOrderCommand, OrderActionResponse>
     {
-        public async Task<MarketplaceOrderDto> Handle(DispatchMarketplaceOrderCommand request, CancellationToken cancellationToken)
+        public async Task<OrderActionResponse> Handle(DispatchMarketplaceOrderCommand request, CancellationToken cancellationToken)
         {
             if (!currentUser.UserId.HasValue)
                 throw new ForbiddenAccessException("User is not authenticated.");
 
             var order = await context.MarketplaceOrders
-                .Include(o => o.Listing).ThenInclude(l => l.Seller)
-                .Include(o => o.Buyer)
+                .Include(o => o.Listing)
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
                 ?? throw new NotFoundException(nameof(MarketplaceOrder), request.OrderId);
 
@@ -37,11 +39,19 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.DispatchMarketpl
             order.Status = MarketplaceOrderStatus.Dispatched;
             order.DispatchedAt = DateTime.UtcNow;
             order.TrackingNumber = string.IsNullOrWhiteSpace(request.Request.TrackingNumber)
-                                        ? TrackingNumberFormatter.Generate(order.Id, order.DispatchedAt.Value)
+                                        ? ReferenceNumberGenerator.Generate(ReferenceNumberType.TrackingNumber,order.Id)
                                         : request.Request.TrackingNumber;
 
+            OrderNotifier.Notify(context, order.BuyerId, "OrderDispatched",
+                 "Order dispatched", $"Your order {order.OrderNumber} has been dispatched.", order.Id);
+
             await context.SaveChangesAsync(cancellationToken);
-            return mapper.Map<MarketplaceOrderDto>(order);
+
+            return new OrderActionResponse(
+                order.Id, 
+                order.Status.ToString(),
+                order.Status.ToArabic(), 
+                "Order dispatched successfully");
         }
     }
 }

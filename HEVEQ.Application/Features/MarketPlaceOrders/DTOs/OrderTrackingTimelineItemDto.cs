@@ -4,5 +4,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.DTOs
 {
-    public record OrderTrackingTimelineItemDto(string Label, DateTime? Date, bool Done);
+    public record OrderTrackingTimelineItemDto(string Label, string LabelAr, DateTime? Date, bool Done);
 }

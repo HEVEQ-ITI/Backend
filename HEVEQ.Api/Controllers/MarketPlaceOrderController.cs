@@ -6,8 +6,10 @@ using HEVEQ.Application.Features.MarketPlaceOrders.Commands.ConfirmMarketplaceOr
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.CreateMarketPlaceOrder;
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.DeliverMarketplaceOrder;
 using HEVEQ.Application.Features.MarketPlaceOrders.Commands.DispatchMarketplaceOrder;
+using HEVEQ.Application.Features.MarketPlaceOrders.Commands.OpenMarketplaceOrderDispute;
 using HEVEQ.Application.Features.MarketPlaceOrders.DTOs;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetCustomerOrder;
+using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceEscrow;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketPlaceOrderById;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceOrderTracking;
 using HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetProviderOrder;
@@ -60,14 +62,14 @@ namespace HEVEQ.Api.Controllers
         }
 
         [HttpPost("{id:guid}/seller-confirm")]
-        public async Task<ActionResult<MarketplaceOrderDto>> SellerConfirm(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<OrderActionResponse>> SellerConfirm(Guid id, CancellationToken cancellationToken)
         {
         var result = await _mediator.Send(new ConfirmMarketplaceOrderCommand(id), cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("{id:guid}/dispatch")]
-        public async Task<ActionResult<MarketplaceOrderDto>> Dispatch(Guid id,[FromBody] DispatchMarketplaceOrderRequest request,CancellationToken cancellationToken)
+        public async Task<ActionResult<OrderActionResponse>> Dispatch(Guid id,[FromBody] DispatchMarketplaceOrderRequest request,CancellationToken cancellationToken)
         {
 
             var result = await _mediator.Send(new DispatchMarketplaceOrderCommand(id,request), cancellationToken);
@@ -75,7 +77,7 @@ namespace HEVEQ.Api.Controllers
         }
 
         [HttpPost("{id:guid}/deliver")]
-        public async Task<ActionResult<MarketplaceOrderDto>> Deliver(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<OrderActionResponse>> Deliver(Guid id, CancellationToken cancellationToken)
         {
 
             var result = await _mediator.Send(new DeliverMarketplaceOrderCommand(id), cancellationToken);
@@ -83,14 +85,14 @@ namespace HEVEQ.Api.Controllers
         }
 
         [HttpPost("{id:guid}/complete")]
-        public async Task<ActionResult<MarketplaceOrderDto>> Complete(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<OrderActionResponse>> Complete(Guid id, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new CompleteMarketplaceOrderCommand(id), cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("{id:guid}/cancel")]
-        public async Task<ActionResult<MarketplaceOrderDto>> Cancel(
+        public async Task<ActionResult<OrderActionResponse>> Cancel(
         Guid id,
         [FromBody] CancelMarketplaceOrderRequest request,
         CancellationToken cancellationToken)
@@ -114,6 +116,10 @@ namespace HEVEQ.Api.Controllers
             return Ok(result);
         }
 
+        [HttpPost("{id:guid}/dispute")]
+        public async Task<ActionResult<OpenDisputeResponse>> OpenDispute(Guid id, [FromBody] OpenDisputeRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new OpenMarketplaceOrderDisputeCommand(id, request), cancellationToken);
         [HttpPost("{id:guid}/payment/mock-confirm")]
         [Authorize(Roles = "Customer")]
         public async Task<ActionResult<MarketplaceOrderPaymentConfirmResponseDto>> ConfirmMarketplaceOrderPaymentForDemo([FromRoute] Guid id, [FromBody] PaymentConfirmRequest request, CancellationToken cancellationToken)
@@ -123,6 +129,12 @@ namespace HEVEQ.Api.Controllers
             return Ok(result);
         }
 
-
+        [HttpGet("{id:guid}/escrow")]
+        public async Task<ActionResult<MarketplaceEscrowDto>> GetEscrow(Guid id,CancellationToken cancellationToken)
+        {
+            return Ok(await _mediator.Send(
+                new GetMarketplaceEscrowQuery(id),
+                cancellationToken));
+        }
     }
 }

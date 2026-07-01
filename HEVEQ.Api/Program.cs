@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 using DotNetEnv;
 
 namespace HEVEQ.Api
@@ -33,6 +34,12 @@ namespace HEVEQ.Api
 
             // Infrastructure Layer Dependencies
             builder.Services.AddInfrastructure(builder.Configuration);
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter(allowIntegerValues: false));
+            });
+
             builder.Services.AddControllers()
                   .AddJsonOptions(options =>
                            {

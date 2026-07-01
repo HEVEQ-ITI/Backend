@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Localization;
+using HEVEQ.Application.Features.MarketPlaceOrders.Common;
 using HEVEQ.Application.Features.MarketPlaceOrders.DTOs;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
@@ -12,16 +14,15 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CancelMarketplaceOrder
 {
-    public class CancelMarketplaceOrderCommandHandler(IApplicationDbContext context, IMapper mapper, ICurrentUserService currentUser) : IRequestHandler<CancelMarketplaceOrderCommand, MarketplaceOrderDto>
+    public class CancelMarketplaceOrderCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser) : IRequestHandler<CancelMarketplaceOrderCommand, OrderActionResponse>
     {
-        public async Task<MarketplaceOrderDto> Handle(CancelMarketplaceOrderCommand request, CancellationToken cancellationToken)
+        public async Task<OrderActionResponse> Handle(CancelMarketplaceOrderCommand request, CancellationToken cancellationToken)
         {
             if (!currentUser.UserId.HasValue)
                 throw new ForbiddenAccessException("User is not authenticated.");
 
             var order = await context.MarketplaceOrders
-                .Include(o => o.Listing).ThenInclude(l => l.Seller)
-                .Include(o => o.Buyer)
+                .Include(o => o.Listing)
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
                 ?? throw new NotFoundException(nameof(MarketplaceOrder), request.OrderId);
 
@@ -61,8 +62,17 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CancelMarketplac
                 order.Listing.UpdatedAt = DateTime.UtcNow;
             }
 
+            var notifyUserId = isBuyer ? order.Listing.SellerId : order.BuyerId;
+            OrderNotifier.Notify(context, notifyUserId, "OrderCancelled",
+                "Order cancelled", $"Order {order.OrderNumber} was cancelled.", order.Id);
+
             await context.SaveChangesAsync(cancellationToken);
-            return mapper.Map<MarketplaceOrderDto>(order);
+
+            return new OrderActionResponse(
+                order.Id,
+                order.Status.ToString(),
+                order.Status.ToArabic(), 
+                "Order cancelled successfully");
 
         }
     }

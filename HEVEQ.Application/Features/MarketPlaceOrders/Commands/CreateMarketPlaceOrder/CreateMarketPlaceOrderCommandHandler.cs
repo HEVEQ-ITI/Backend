@@ -1,4 +1,6 @@
-﻿using HEVEQ.Application.Common.Exceptions;
+﻿using HEVEQ.Application.Common.Enums;
+using HEVEQ.Application.Common.Exceptions;
+using HEVEQ.Application.Common.Helpers;
 using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Common.Localization;
 using HEVEQ.Application.Features.MarketPlaceOrders.Common;
@@ -46,6 +48,9 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CreateMarketPlac
                 CreatedAt = DateTime.UtcNow
             };
 
+            order.OrderNumber = ReferenceNumberGenerator.Generate(
+                        ReferenceNumberType.MarketplaceOrder,order.Id);
+
             context.MarketplaceOrders.Add(order);
             listing.Status = MarketplaceListingStatus.Sold;
             listing.UpdatedAt = DateTime.UtcNow;
@@ -54,7 +59,7 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CreateMarketPlac
 
             return new CreateMarketplaceOrderResponse(
                 order.Id,
-                OrderNumberFormatter.Generate(order.Id, order.CreatedAt),
+                order.OrderNumber,
                 listing.Title,
                 order.Amount,
                 order.Status.ToString(),

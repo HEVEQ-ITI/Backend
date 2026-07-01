@@ -10,6 +10,12 @@ public class MarketplaceOrderConfiguration : IEntityTypeConfiguration<Marketplac
     {
         builder.ToTable("MarketplaceOrders");
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.OrderNumber)
+                 .HasMaxLength(30)
+                 .IsRequired();
+
+        builder.HasIndex(x => x.OrderNumber)
+                .IsUnique();
 
         builder.Property(x => x.Amount).HasColumnType("decimal(10,2)");
         builder.Property(x => x.DeliveryAddress).HasMaxLength(500);

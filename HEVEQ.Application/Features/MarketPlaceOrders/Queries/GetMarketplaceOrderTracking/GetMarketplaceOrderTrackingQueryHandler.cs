@@ -25,6 +25,12 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceOrd
             MarketplaceOrderStatus.Delivered
         };
 
+        private static readonly MarketplaceOrderStatus[] DisputableStatuses =
+       {
+            MarketplaceOrderStatus.Dispatched,
+            MarketplaceOrderStatus.Delivered
+        };
+
         public async Task<OrderTrackingDto> Handle(GetMarketplaceOrderTrackingQuery request, CancellationToken cancellationToken)
         {
             if (!currentUser.UserId.HasValue)
@@ -33,28 +39,37 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceOrd
             var order = await context.MarketplaceOrders
                .AsNoTracking()
                .Include(o => o.Buyer)
-               .Include(o => o.Listing).ThenInclude(l => l.Seller)
+               .Include(o => o.Listing).ThenInclude(l => l.Seller).ThenInclude(s => s.ProviderProfile)
                .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
                ?? throw new NotFoundException(nameof(MarketplaceOrder), request.OrderId);
 
             var userId = currentUser.UserId.Value;
             var isBuyer = order.BuyerId == userId;
             var isSeller = order.Listing.SellerId == userId;
+            var isAdmin = currentUser.Role == "Admin";
 
-            if (!isBuyer && !isSeller)
+
+            if (!isBuyer && !isSeller && !isAdmin)
                 throw new ForbiddenAccessException("You are not allowed to view this order's tracking.");
+
+            var escrowStatus = await context.EscrowRecords
+               .Where(e => e.MarketplaceOrderId == order.Id)
+               .Select(e => (EscrowStatus?)e.Status)
+               .FirstOrDefaultAsync(cancellationToken);
+
 
             var timeline = new List<OrderTrackingTimelineItemDto>
             {
-                new("Order Created", order.CreatedAt, true),
-                new("Seller Confirmed", order.SellerConfirmedAt, order.SellerConfirmedAt.HasValue),
-                new("Dispatched", order.DispatchedAt, order.DispatchedAt.HasValue),
-                new("Delivered", order.DeliveredAt, order.DeliveredAt.HasValue),
-                new("Completed", order.ConfirmedByBuyerAt, order.ConfirmedByBuyerAt.HasValue)
+                new("Order Created", "تم إنشاء الطلب", order.CreatedAt, true),
+                new("Seller Confirmed", "تم تأكيد البائع", order.SellerConfirmedAt, order.SellerConfirmedAt.HasValue),
+                new("Dispatched", "تم الشحن", order.DispatchedAt, order.DispatchedAt.HasValue),
+                new("Delivered", "تم التوصيل", order.DeliveredAt, order.DeliveredAt.HasValue),
+                new("Completed", "مكتمل", order.ConfirmedByBuyerAt, order.ConfirmedByBuyerAt.HasValue)
             };
 
             if (order.CancelledAt.HasValue)
-                timeline.Add(new OrderTrackingTimelineItemDto("Cancelled", order.CancelledAt, true));
+                timeline.Add(new OrderTrackingTimelineItemDto("Cancelled", "تم الإلغاء", order.CancelledAt, true));
+
 
             // Each flag is the exact precondition the matching action handler enforces —
             // ConfirmMarketplaceOrderCommandHandler requires PaymentCaptured, etc.
@@ -64,23 +79,29 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceOrd
                 CanDispatch = isSeller && order.Status == MarketplaceOrderStatus.SellerConfirmed,
                 CanMarkDelivered = isSeller && order.Status == MarketplaceOrderStatus.Dispatched,
                 CanComplete = isBuyer && order.Status == MarketplaceOrderStatus.Delivered,
-                CanCancel = (isBuyer || isSeller) && CancellableStatuses.Contains(order.Status)
+                CanCancel = (isBuyer || isSeller) && CancellableStatuses.Contains(order.Status),
+                CanDispute = (isBuyer || isSeller) && DisputableStatuses.Contains(order.Status)
             };
+            var seller = order.Listing.Seller;
+            var sellerName = seller.ProviderProfile != null && !string.IsNullOrEmpty(seller.ProviderProfile.CompanyName)
+                ? seller.ProviderProfile.CompanyName
+                : $"{seller.FirstName} {seller.LastName}";
 
             return new OrderTrackingDto
             {
                 Id = order.Id,
-                OrderNumber = OrderNumberFormatter.Generate(order.Id, order.CreatedAt),
+                OrderNumber = order.OrderNumber,
                 ListingTitle = order.Listing.Title,
                 BuyerName = $"{order.Buyer.FirstName} {order.Buyer.LastName}",
-                SellerName = $"{order.Listing.Seller.FirstName} {order.Listing.Seller.LastName}",
+                SellerName = sellerName,
                 Amount = order.Amount,
                 DeliveryPreference = order.DeliveryPreference.HasValue ? order.DeliveryPreference.Value.ToString() : null,
                 TrackingNumber = order.TrackingNumber,
                 Status = order.Status.ToString(),
                 StatusAr = order.Status.ToArabic(),
+                EscrowStatus = escrowStatus?.ToString(),
                 Timeline = timeline,
-                Actions = actions
+                AvailableActions = actions
             };
         }
 
