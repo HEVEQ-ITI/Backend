@@ -10,13 +10,16 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Admin.Query.GetAdminUsers
 {
-    public class GetAdminUsersQueryHandler(IApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public class GetAdminUsersQueryHandler(
+        UserManager<ApplicationUser> userManager,
+        IApplicationDbContext context)
         : IRequestHandler<GetAdminUsersQuery, PaginatedUsersResponse>
     {
         public async Task<PaginatedUsersResponse> Handle(GetAdminUsersQuery request, CancellationToken cancellationToken)
         {
             var query = userManager.Users.AsQueryable();
 
+           
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
                 var search = request.Search.Trim().ToLower();
@@ -37,8 +40,6 @@ namespace HEVEQ.Application.Features.Admin.Query.GetAdminUsers
             {
                 var usersInRole = await userManager.GetUsersInRoleAsync(request.Role);
                 var userIdsInRole = usersInRole.Select(u => u.Id).ToList();
-
-                query = query.Where(u => userIdsInRole.Contains(u.Id));
             }
 
             var totalCount = await query.CountAsync(cancellationToken);
@@ -49,7 +50,6 @@ namespace HEVEQ.Application.Features.Admin.Query.GetAdminUsers
                 .ToListAsync(cancellationToken);
 
             var pagedUserIds = pagedUsers.Select(u => u.Id).ToList();
-
             var providerProfiles = await context.ProviderProfiles
                 .Where(p => pagedUserIds.Contains(p.UserId))
                 .ToDictionaryAsync(p => p.UserId, p => p.TrustScore, cancellationToken);
@@ -69,14 +69,15 @@ namespace HEVEQ.Application.Features.Admin.Query.GetAdminUsers
                     Role = roles.FirstOrDefault() ?? "User",
                     IsActive = user.IsActive,
                     TrustScore = providerProfiles.ContainsKey(user.Id) ? providerProfiles[user.Id] : null,
-                   
                 });
             }
 
             return new PaginatedUsersResponse
             {
                 Items = items,
-                TotalCount = totalCount
+                TotalCount = totalCount,
+                Page = request.Page,
+                PageSize = request.PageSize  
             };
         }
     }

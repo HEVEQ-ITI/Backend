@@ -160,9 +160,11 @@ public class GetProviderServiceListingsQueryHandler(
                     .OrderBy(p => p.DisplayOrder)
                     .Select(p => p.PhotoUrl)
                     .FirstOrDefault(),
-                l.HourlyRate,
+                HourlyRate = l.HourlyRate ?? 0m,
                 l.Status,
-                l.QualityScore,
+                QualityScore = l.QualityScore ?? 0,
+                l.AiRiskScore,
+                l.AiRiskLevel,
                 PhotosCount = l.Photos.Count,
                 OperatorsCount = l.ServiceListingOperators.Count,
                 AvailabilityCount = l.Availability.Count,
@@ -170,23 +172,24 @@ public class GetProviderServiceListingsQueryHandler(
             })
             .ToListAsync(cancellationToken);
 
-        // 2️⃣ هنا صلّحنا الـ Mapping وباصينا القيم جوه الـ Constructor بالترتيب المطلوب للـ Record
         var items = rawItems
-            .Select(l => new ProviderServiceListingDto(
-                l.Id,
-                l.Title,
-                l.CategoryName,
-                l.CoverPhotoUrl,
-                (decimal)l.HourlyRate,
-                l.Status.ToString(),
-                l.Status.ToArabicText(),
-                (int)l.QualityScore,
-                l.PhotosCount,
-                l.OperatorsCount,
-                l.AvailabilityCount,
-                l.CreatedAt
-            ))
-            .ToList();
+                  .Select(l => new ProviderServiceListingDto(
+                      l.Id,
+                      l.Title,
+                      l.CategoryName,
+                      l.CoverPhotoUrl,
+                      l.HourlyRate,
+                      l.Status.ToString(),
+                      l.Status.ToArabicText(), 
+                      l.QualityScore,
+                      l.AiRiskScore,
+                      l.AiRiskLevel,
+                      l.PhotosCount,
+                      l.OperatorsCount,
+                      l.AvailabilityCount,
+                      l.CreatedAt
+                  ))
+                  .ToList();
 
         return new ProviderServiceListingsResultDto
         {

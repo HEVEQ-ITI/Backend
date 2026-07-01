@@ -1,6 +1,7 @@
 ﻿using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Extensions;
 using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Features.Documents.DTOs;
 using HEVEQ.Application.Features.ServiceListings.DTOs;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
@@ -38,6 +39,7 @@ namespace HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceLis
                     .Include(l => l.ServiceListingOperators).ThenInclude(slo => slo.Operator)
                     .Include(l => l.Availability)
                     .Include(l => l.BlackoutDates)
+                    .Include(l => l.Documents)
                     .SingleOrDefaultAsync(l => l.Id == request.Id, cancellationToken)
                     ?? throw new NotFoundException(nameof(ServiceListing), request.Id);
 
@@ -55,6 +57,7 @@ namespace HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceLis
                 }).ToList();
 
             var operatorsDto = listing.ServiceListingOperators
+                .Where(slo => slo.Operator != null)
                 .Select(slo => new ServiceListingOperatorDto
                 {
                     OperatorId = slo.Operator.Id,
@@ -88,6 +91,23 @@ namespace HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceLis
                     b.Reason
                 )).ToList();
 
+            var documentsDto = listing.Documents
+                .Select(d => new DocumentDto
+                {
+                    Id = d.Id,
+                    UserId = d.UserId,
+                    ServiceListingId = d.ServiceListingId,
+                    MarketplaceListingId = d.MarketplaceListingId,
+                    OperatorId = d.OperatorId,
+                    DocumentType = d.DocumentType, 
+                    FileUrl = d.FileUrl,
+                    Status = d.Status,             
+                    ExpiryDate = d.ExpiryDate,
+                    FailureReason = d.FailureReason,
+                    UploadedAt = d.UploadedAt,
+                    VerifiedAt = d.VerifiedAt
+                }).ToList();
+
             var providerProfileComplete = await context.ProviderProfiles
                 .AsNoTracking()
                 .Where(p => p.Id == providerProfileId)
@@ -97,9 +117,10 @@ namespace HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceLis
             bool canSubmitForReview = false;
             var missingRequirements = new List<string>();
 
-            if (listing.Status == ServiceListingStatus.Draft)
+      
+            if (listing.Status == ServiceListingStatus.Draft || listing.Status == ServiceListingStatus.Rejected)
             {
-                var activeOperatorsCount = listing.ServiceListingOperators.Count(slo => slo.Operator.IsActive);
+                var activeOperatorsCount = listing.ServiceListingOperators.Count(slo => slo.Operator != null && slo.Operator.IsActive);
 
                 if (photosDto.Count < 3) missingRequirements.Add("At least 3 photos");
                 if (activeOperatorsCount < 1) missingRequirements.Add("At least 1 operator");
@@ -112,17 +133,20 @@ namespace HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceLis
             return new ManageServiceListingDto(
                 Id: listing.Id,
                 Title: listing.Title,
-                Description: listing.Description,
+                Description: listing.Description ?? string.Empty,
                 CategoryId: listing.CategoryId,
                 Status: listing.Status.ToString(),
                 StatusAr: listing.Status.ToArabicText(),
                 AdminRejectionNote: listing.AdminRejectionNote,
                 QualityScore: listing.QualityScore,
+                AiRiskScore: listing.AiRiskScore,
+                AiRiskLevel: listing.AiRiskLevel,
+                AiRecommendation: listing.AiRecommendation,
                 Photos: photosDto,
                 Operators: operatorsDto,
                 Availability: availabilityDto,
                 BlackoutDates: blackoutDatesDto,
-                Documents: [],
+                Documents: documentsDto,
                 CanSubmitForReview: canSubmitForReview,
                 MissingRequirements: missingRequirements
             );

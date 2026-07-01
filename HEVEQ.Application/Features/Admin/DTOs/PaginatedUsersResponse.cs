@@ -8,5 +8,7 @@ namespace HEVEQ.Application.Features.Admin.DTOs
     {
         public List<UserAdminDTO> Items { get; set; } = new();
         public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
     }
 }

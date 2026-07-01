@@ -61,7 +61,8 @@ namespace HEVEQ.Application.Features.ServiceListings.Commands.SubmitServiceListi
 
 
             var photosCount = listing.Photos.Count;
-            var activeOperatorsCount = listing.ServiceListingOperators.Count(slo => slo.Operator.IsActive);
+            var activeOperatorsCount = listing.ServiceListingOperators
+               .Count(slo => slo.Operator != null && slo.Operator.IsActive);
             var availabilityCount = listing.Availability.Count;
 
             var missing = new List<string>();

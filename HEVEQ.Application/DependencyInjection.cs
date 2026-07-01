@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
 using HEVEQ.Application.Common.AI;
 using HEVEQ.Application.Common.Behaviours;
+using HEVEQ.Application.Common.Services;                       
+
 using HEVEQ.Application.Features.Bookings.Services.Implementation;
 using HEVEQ.Application.Features.Bookings.Services.Interfaces;
 using MediatR;
@@ -28,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IBookingAddressResolver, BookingAddressResolver>();
         services.AddScoped<IBookingCreationService, BookingCreationService>();
         services.AddScoped<ICancellationPolicyService, CancellationPolicyService>();
+        services.AddScoped<NotificationHelper>();
 
         services.Configure<AiSettings>(configuration.GetSection("AiSettings"));
 
