@@ -95,8 +95,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CompleteBookingByProvider
 
             return new CompleteBookingByProviderResponseDto
             {
-                Id = booking.Id,
-                BookingNumber = booking.BookingNumber,
+                BookingId = booking.Id,
                 Status = booking.Status.ToString(),
                 StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
                 EvidenceFormId = evidenceForm.Id,

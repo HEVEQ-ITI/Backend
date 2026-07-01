@@ -5,7 +5,7 @@
         public Guid Id { get; set; }
         public Guid BookingId { get; set; }
         public string BookingNumber { get; set; } = string.Empty;
-        public decimal RequestedAdditionalHours { get; set; }
+        public decimal RequestedAdditionalHrs { get; set; }
         public decimal AdditionalCostAmount { get; set; }
         public string Status { get; set; } = string.Empty;
         public string StatusAr { get; set; } = string.Empty;

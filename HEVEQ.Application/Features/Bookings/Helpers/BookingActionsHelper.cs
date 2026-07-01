@@ -6,7 +6,7 @@ public static class BookingActionsHelper
 {
     public static bool CanCustomerCancel(BookingStatus status)
     {
-        return status is BookingStatus.PendingProviderResponse or BookingStatus.ConfirmedPendingPayment;
+        return status is BookingStatus.PendingProviderResponse or BookingStatus.ConfirmedPendingPayment or BookingStatus.Active;
     }
 
     public static bool CanCustomerConfirmCompletion(BookingStatus status)
@@ -37,5 +37,15 @@ public static class BookingActionsHelper
     public static bool CanProviderComplete(BookingStatus status)
     {
         return status == BookingStatus.InProgress;
+    }
+
+    public static bool CanProviderCancel(BookingStatus status)
+    {
+        return status is BookingStatus.ConfirmedPendingPayment or BookingStatus.Active;
+    }
+
+    public static bool CanCustomerPay(BookingStatus status)
+    {
+        return status == BookingStatus.ConfirmedPendingPayment;
     }
 }

@@ -5,12 +5,14 @@
         public Guid Id { get; set; }
         public string BookingNumber { get; set; } = string.Empty;
         public Guid ServiceListingId { get; set; }
-        public string ServiceListingTitle { get; set; } = string.Empty;
+        public string ServiceTitle { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public string ProviderCompany { get; set; } = string.Empty;
-        public string? AssignedOperatorName { get; set; }
-        public BookingActionsDto Actions { get; set; } = new();
-        public IReadOnlyList<BookingTimelineItemDto> Timeline { get; set; } = new List<BookingTimelineItemDto>();
+        public string? OperatorName { get; set; }
+        public BookingActionsDto AvailableActions { get; set; } = new();
+        public IReadOnlyList<BookingTimelineItemDto> Timeline { get; set; }  = new List<BookingTimelineItemDto>();
+        public string? EscrowStatus { get; set; }
+        public string? EscrowStatusAr { get; set; }
         public Guid CustomerId { get; set; }
         public string JobTitle { get; set; } = string.Empty;
         public string? JobDescription { get; set; }

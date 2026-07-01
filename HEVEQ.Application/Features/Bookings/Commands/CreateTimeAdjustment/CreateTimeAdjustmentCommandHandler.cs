@@ -50,15 +50,15 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateTimeAdjustment
             if (hasPendingRequest)
                 throw new InvalidOperationException("There is already a pending time adjustment request for this booking.");
 
-            var additionalCostAmount = booking.HourlyRateSnapshot * request.AdditionalHours;
+            var additionalCostAmount = booking.HourlyRateSnapshot * request.RequestedAdditionalHrs;
 
             var adjustmentRequest = new BookingTimeAdjustmentRequest
             {
                 BookingId = booking.Id,
-                RequestedAdditionalHrs = request.AdditionalHours,
+                RequestedAdditionalHrs = request.RequestedAdditionalHrs,
                 AdditionalCostAmount = additionalCostAmount,
                 Status = BookingTimeAdjustmentStatus.Pending,
-                ProviderNote = request.Reason.Trim(),
+                ProviderNote = request.ProviderNote.Trim(),
                 CreatedAt = DateTime.Now
             };
 
@@ -69,7 +69,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateTimeAdjustment
                 Id = adjustmentRequest.Id,
                 BookingId = booking.Id,
                 BookingNumber = booking.BookingNumber,
-                RequestedAdditionalHours = adjustmentRequest.RequestedAdditionalHrs,
+                RequestedAdditionalHrs = adjustmentRequest.RequestedAdditionalHrs,
                 AdditionalCostAmount = adjustmentRequest.AdditionalCostAmount,
                 Status = adjustmentRequest.Status.ToString(),
                 StatusAr = TimeAdjustmentDisplayHelper.GetStatusAr(adjustmentRequest.Status),
