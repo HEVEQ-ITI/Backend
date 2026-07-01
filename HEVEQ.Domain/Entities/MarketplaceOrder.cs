@@ -6,6 +6,7 @@ namespace HEVEQ.Domain.Entities;
 public class MarketplaceOrder
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public string OrderNumber { get; set; } = string.Empty;
 
     public Guid BuyerId { get; set; }
 

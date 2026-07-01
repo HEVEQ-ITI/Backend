@@ -45,6 +45,7 @@ namespace HEVEQ.Application.Features.MarketPlace.Queries.GetMarketplaceListings
             
             var entities = await query
                 .Include(l => l.Seller)
+                .ThenInclude(s => s.ProviderProfile)
                 .Include(l => l.Category)
                 .Include(l => l.Photos)
                 .Skip((request.Page - 1) * request.PageSize)

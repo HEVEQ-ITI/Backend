@@ -6,6 +6,7 @@ using HEVEQ.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace HEVEQ.Api
 {
@@ -22,7 +23,12 @@ namespace HEVEQ.Api
 
             // Infrastructure Layer Dependencies
             builder.Services.AddInfrastructure(builder.Configuration);
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter(allowIntegerValues: false));
+            });
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AngularClient", policy =>

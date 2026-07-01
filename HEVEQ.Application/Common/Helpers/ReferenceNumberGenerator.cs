@@ -20,6 +20,7 @@ public static class ReferenceNumberGenerator
             ReferenceNumberType.Document => "DC",
             ReferenceNumberType.ServiceListing => "SL",
             ReferenceNumberType.MarketplaceListing => "ML",
+            ReferenceNumberType.TrackingNumber => "TR",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unsupported reference number type.")
         };
     }

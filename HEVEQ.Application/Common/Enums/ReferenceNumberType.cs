@@ -12,6 +12,7 @@ namespace HEVEQ.Application.Common.Enums
         Ticket = 4,
         Document = 5,
         ServiceListing = 6,
-        MarketplaceListing = 7
+        MarketplaceListing = 7,
+        TrackingNumber=8
     }
 }

@@ -50,7 +50,7 @@ namespace HEVEQ.Api.Controllers
 
         [HttpGet]
         [Route("~/api/provider/marketplace-listings")]
-        [Authorize]
+        [Authorize(Roles = "Provider")]
         public async Task<ActionResult<PagedResult<ProviderMarketPlaceListingDTO>>> GetMyListings([FromQuery] GetProviderMarketplaceListingsQuery query, CancellationToken cancellationToken = default)
         {
 
@@ -58,7 +58,7 @@ namespace HEVEQ.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Provider,Customer")]
+        [Authorize(Roles = "Provider")]
         public async Task<ActionResult<CreateMarketplaceListingResponse>> Create(
         [FromBody] CreateMarketplaceListingRequest request,
         CancellationToken cancellationToken)
@@ -72,7 +72,7 @@ namespace HEVEQ.Api.Controllers
 
 
         [HttpPut("{id:guid}")]
-        [Authorize]
+        [Authorize(Roles = "Provider")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMarketplaceListingRequest request, CancellationToken cancellationToken)
         {
             await _mediator.Send(new UpdateMarketplaceListingCommand(id, request), cancellationToken);
@@ -82,7 +82,7 @@ namespace HEVEQ.Api.Controllers
 
 
         [HttpDelete("{id:guid}")]
-        [Authorize]
+        [Authorize(Roles = "Provider")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             await _mediator.Send(new DeleteMarketPlaceListingCommand(id), cancellationToken);
@@ -90,7 +90,7 @@ namespace HEVEQ.Api.Controllers
         }
 
         [HttpPost("{id:guid}/photos")]
-         [Authorize]
+        [Authorize(Roles = "Provider")]
         public async Task<ActionResult<Guid>> AddPhoto(
         Guid id,
         [FromBody] AddMarketplacePhotoRequest request,
@@ -102,7 +102,7 @@ namespace HEVEQ.Api.Controllers
         }
 
         [HttpDelete("{id:guid}/photos/{photoId:guid}")]
-         [Authorize]
+        [Authorize(Roles = "Provider")]
         public async Task<IActionResult> DeletePhoto([FromRoute] Guid id, [FromRoute] Guid photoId, CancellationToken cancellationToken)
         {
             await _mediator.Send(new DeleteMarketplaceListingPhotoCommand(id, photoId), cancellationToken);

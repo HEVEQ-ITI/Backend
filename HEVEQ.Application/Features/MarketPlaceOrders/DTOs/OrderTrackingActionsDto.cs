@@ -11,5 +11,6 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.DTOs
         public bool CanMarkDelivered { get; set; }
         public bool CanComplete { get; set; }
         public bool CanCancel { get; set; }
+        public bool CanDispute { get; set; }
     }
 }

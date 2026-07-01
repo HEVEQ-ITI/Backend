@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Localization;
+using HEVEQ.Application.Features.MarketPlaceOrders.Common;
 using HEVEQ.Application.Features.MarketPlaceOrders.DTOs;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
@@ -12,16 +14,15 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.ConfirmMarketPlaceOrder
 {
-    public class ConfirmMarketplaceOrderCommandHandler(IApplicationDbContext context, IMapper mapper, ICurrentUserService currentUser) : IRequestHandler<ConfirmMarketplaceOrderCommand, MarketplaceOrderDto>
+    public class ConfirmMarketplaceOrderCommandHandler(IApplicationDbContext context,  ICurrentUserService currentUser) : IRequestHandler<ConfirmMarketplaceOrderCommand, OrderActionResponse>
     {
-        public async Task<MarketplaceOrderDto> Handle(ConfirmMarketplaceOrderCommand request, CancellationToken cancellationToken)
+        public async Task<OrderActionResponse> Handle(ConfirmMarketplaceOrderCommand request, CancellationToken cancellationToken)
         {
             if (!currentUser.UserId.HasValue)
                 throw new ForbiddenAccessException("User is not authenticated.");
 
             var order = await context.MarketplaceOrders
-             .Include(o => o.Listing).ThenInclude(l => l.Seller)
-             .Include(o => o.Buyer)
+             .Include(o => o.Listing)
              .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
              ?? throw new NotFoundException(nameof(MarketplaceOrder), request.OrderId);
 
@@ -35,9 +36,16 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.ConfirmMarketPla
             order.Status = MarketplaceOrderStatus.SellerConfirmed;
             order.SellerConfirmedAt = DateTime.UtcNow;
 
+            OrderNotifier.Notify(context, order.BuyerId, "OrderSellerConfirmed",
+                    "Order confirmed", $"Your order {order.OrderNumber} has been confirmed by the seller.", order.Id);
+
             await context.SaveChangesAsync(cancellationToken);
 
-            return mapper.Map<MarketplaceOrderDto>(order);
+            return new OrderActionResponse(
+                order.Id,
+                order.Status.ToString(), 
+                order.Status.ToArabic(), 
+                "Order confirmed successfully");
         }
     }
 }

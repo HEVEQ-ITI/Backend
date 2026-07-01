@@ -23,14 +23,16 @@ namespace HEVEQ.Application.Features.MarketPlace.Queries.GetProviderMarketplaceL
             var sellerId = currentUser.UserId.Value;
 
             var query = context.MarketplaceListings
-                .Where(l => l.SellerId == sellerId)
-                .OrderByDescending(l => l.CreatedAt);
+                .Where(l => l.SellerId == sellerId);
+
+            if (request.Status.HasValue)
+                query = query.Where(l => l.Status == request.Status.Value);
+
+            query = query.OrderByDescending(l => l.CreatedAt);
 
             var totalCount = await query.CountAsync(cancellationToken);
 
             var providerListings = await query
-                .Include(x => x.Seller)
-                .Include(l => l.Category)
                 .Include(l => l.Photos)
                 .Skip((request.Page- 1) * request.PageSize)
                 .Take(request.PageSize)

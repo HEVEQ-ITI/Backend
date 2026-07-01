@@ -53,5 +53,17 @@ namespace HEVEQ.Application.Common.Localization
             _ => status.ToString()
         };
 
+        public static string ToArabic(this EscrowStatus status) => status switch
+        {
+            EscrowStatus.PendingCapture => "في انتظار التحصيل",
+            EscrowStatus.Captured => "تم التحصيل",
+            EscrowStatus.Held => "محتجز",
+            EscrowStatus.Released => "تم الإفراج",
+            EscrowStatus.Refunded => "تم استرجاع المبلغ",
+            EscrowStatus.Frozen => "مجمّد",
+            EscrowStatus.PartialSettled => "تمت التسوية جزئياً",
+            _ => status.ToString()
+        };
+
     }
 }

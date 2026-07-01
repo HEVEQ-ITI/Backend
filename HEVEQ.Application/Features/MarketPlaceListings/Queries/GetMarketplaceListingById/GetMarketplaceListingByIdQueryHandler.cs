@@ -2,6 +2,7 @@
 using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.MarketPlace.DTOs;
+using HEVEQ.Application.Features.MarketPlaceListings.DTOs;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
 using MediatR;
@@ -18,8 +19,7 @@ namespace HEVEQ.Application.Features.MarketPlace.Queries.GetMarketplaceListingBy
         {
             var listing = await context.MarketplaceListings
             .AsNoTracking()
-            .Include(l => l.Seller)
-            .Include(l => l.Category)
+            .Include(l => l.Seller).ThenInclude(s => s.ProviderProfile)
             .Include(l => l.Photos)
             .FirstOrDefaultAsync(l => l.Id == request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(MarketplaceListing),request.Id);
@@ -30,7 +30,15 @@ namespace HEVEQ.Application.Features.MarketPlace.Queries.GetMarketplaceListingBy
             if (listing.Status != MarketplaceListingStatus.Active && !isOwner && !isAdmin)
                 throw new NotFoundException(nameof(MarketplaceListing), request.Id);
 
-            return mapper.Map<MarketplaceListingDetailsDto>(listing);
+            var dto = mapper.Map<MarketplaceListingDetailsDto>(listing);
+
+            dto.CanBuyNow = listing.Status == MarketplaceListingStatus.Active && !isOwner;
+
+            dto.ManagementInfo = (isOwner || isAdmin)
+               ? mapper.Map<ListingManagementInfoDto>(listing)
+               : null;
+
+            return dto;
         }
     }
 }

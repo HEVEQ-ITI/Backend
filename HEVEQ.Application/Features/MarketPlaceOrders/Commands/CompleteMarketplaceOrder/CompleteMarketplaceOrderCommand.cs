@@ -6,6 +6,6 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.CompleteMarketplaceOrder
 {
-    public record CompleteMarketplaceOrderCommand(Guid OrderId) : IRequest<MarketplaceOrderDto>;
+    public record CompleteMarketplaceOrderCommand(Guid OrderId) : IRequest<OrderActionResponse>;
     
 }
