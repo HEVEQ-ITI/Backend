@@ -11,12 +11,9 @@ namespace HEVEQ.Application.Features.Documents.Commands.RejectDocument
         {
 
             RuleFor(x => x.DocumentId).NotEmpty();
-
             RuleFor(x => x.Request.Reason)
-                .NotEmpty()
-                .WithMessage("A rejection reason should be provided.")
-                .MaximumLength(500)
-                .When(x => x.Request.Reason is not null);
+                .NotEmpty().WithMessage("A rejection reason is required.")
+                .MaximumLength(500);
         }
     }
 }

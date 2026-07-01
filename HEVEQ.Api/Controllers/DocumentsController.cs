@@ -4,7 +4,6 @@ using HEVEQ.Application.Features.Documents.Commands.RejectDocument;
 using HEVEQ.Application.Features.Documents.Commands.UploadDocument;
 using HEVEQ.Application.Features.Documents.DTOs;
 using HEVEQ.Application.Features.Documents.Queries.GetMyDocuments;
-using HEVEQ.Application.Features.Documents.Queries.GetPendingDocuments;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
@@ -44,31 +43,7 @@ namespace HEVEQ.Api.Controllers
             return NoContent();
         }
 
-        [HttpGet("api/admin/documents")]
-        //[Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<DocumentDto>>> GetPending(CancellationToken cancellationToken)
-        {
-            var result = await mediator.Send(new GetPendingDocumentsQuery(), cancellationToken);
-            return Ok(result);
-        }
+     
 
-        [HttpPost("api/admin/documents/{id:guid}/approve")]
-        //[Authorize(Roles = "Admin")]
-        public async Task<ActionResult<DocumentDto>> Approve(Guid id, CancellationToken cancellationToken)
-        {
-            var result = await mediator.Send(new ApproveDocumentCommand(id), cancellationToken);
-            return Ok(result);
-        }
-
-        [HttpPost("api/admin/documents/{id:guid}/reject")]
-        //[Authorize(Roles = "Admin")]
-        public async Task<ActionResult<DocumentDto>> Reject(
-            Guid id,
-            [FromBody] RejectDocumentRequest request,
-            CancellationToken cancellationToken)
-        {
-            var result = await mediator.Send(new RejectDocumentCommand(id, request), cancellationToken);
-            return Ok(result);
-        }
     }
 }

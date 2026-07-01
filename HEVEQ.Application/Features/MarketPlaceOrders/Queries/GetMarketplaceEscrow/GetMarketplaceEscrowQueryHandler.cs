@@ -18,28 +18,29 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Queries.GetMarketplaceEsc
             if (!currentUser.UserId.HasValue)
                 throw new ForbiddenAccessException("User is not authenticated.");
 
-            var escrow = await context.EscrowRecords
-                .AsNoTracking()
-                .Include(e => e.MarketplaceOrder)
-                    .ThenInclude(o => o.Listing)
-                .FirstOrDefaultAsync(
-                    e => e.MarketplaceOrderId == request.OrderId,
-                    cancellationToken)
-                ?? throw new NotFoundException(nameof(EscrowRecord), request.OrderId);
+            var order = await context.MarketplaceOrders
+                 .AsNoTracking()
+                 .Include(o => o.Listing)
+                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
+                 ?? throw new NotFoundException(nameof(MarketplaceOrder), request.OrderId);
 
             var userId = currentUser.UserId.Value;
-
-            var isBuyer = escrow.MarketplaceOrder!.BuyerId == userId;
-            var isSeller = escrow.MarketplaceOrder.Listing.SellerId == userId;
+            var isBuyer = order.BuyerId == userId;
+            var isSeller = order.Listing.SellerId == userId;
             var isAdmin = currentUser.Role == "Admin";
 
 
             if (!isBuyer && !isSeller && !isAdmin)
                 throw new ForbiddenAccessException("You are not allowed to view this escrow.");
 
+            var escrow = await context.EscrowRecords
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.MarketplaceOrderId == order.Id, cancellationToken)
+                ?? throw new NotFoundException(nameof(EscrowRecord), request.OrderId);
+
             return new MarketplaceEscrowDto
             {
-                OrderId = escrow.MarketplaceOrderId!.Value,
+                OrderId = order.Id,
                 GrossAmount = escrow.GrossAmount,
                 PlatformCommission = escrow.PlatformCommission,
                 ProviderPayout = escrow.ProviderPayout,
