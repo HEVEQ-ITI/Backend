@@ -1,5 +1,6 @@
 ﻿using HEVEQ.Application.Features.Admin.Command.ApproveMarketplaceListing;
 using HEVEQ.Application.Features.Admin.Command.RejectMarketplaceListing;
+using HEVEQ.Application.Features.Admin.Query.GetMarketplaceListingReviewDetails;
 using HEVEQ.Application.Features.Admin.Query.GetPendingMarketplaceListings;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -63,6 +64,21 @@ namespace HEVEQ.Api.Controllers
                     404 => NotFound(new { message = result.Message }),
                     _ => StatusCode(500, new { message = result.Message })
                 };
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("{id}/review-details")]
+        public async Task<IActionResult> GetReviewDetails(Guid id)
+        {
+            var query = new GetMarketplaceListingReviewDetailsQuery { Id = id };
+
+            var result = await _mediator.Send(query);
+
+            if (result == null)
+            {
+                return NotFound(new { message = "Marketplace listing not found." });
             }
 
             return Ok(result);

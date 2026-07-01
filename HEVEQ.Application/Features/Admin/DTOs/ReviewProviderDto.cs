@@ -10,12 +10,7 @@ namespace HEVEQ.Application.Features.Admin.DTOs
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
     }
-    public class ReviewPricingDto
-    {
-        public decimal? HourlyRate { get; set; }
-        public decimal? DailyRate { get; set; }
-        public int MinimumBookingHours { get; set; }
-    }
+    
     public class ReviewPhotoDto { public Guid Id { get; set; } public string Url { get; set; } }
     public class ReviewOperatorDto { public Guid Id { get; set; } public string Name { get; set; } }
     public class ReviewAvailabilityDto { public string Day { get; set; } public string Hours { get; set; } }
