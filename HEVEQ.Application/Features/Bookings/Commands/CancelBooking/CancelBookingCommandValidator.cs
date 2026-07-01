@@ -17,7 +17,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CancelBooking
                 .NotEmpty()
                 .WithMessage("BookingId is required.");
 
-            RuleFor(x => x.reason)
+            RuleFor(x => x.Reason)
                 .NotEmpty()
                 .WithMessage("Cancellation reason is required.")
                 .MaximumLength(500)

@@ -29,27 +29,27 @@ namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
             if (booking.Status != BookingStatus.PendingCustomerConfirmation)
                 throw new InvalidOperationException("Booking must be pending customer confirmation before opening a dispute.");
 
-            if (string.IsNullOrWhiteSpace(request.Reason))
-                throw new InvalidOperationException("Dispute reason is required.");
-
-            var evidencePhotoUrls = request.EvidencePhotoUrls ?? Array.Empty<string>();
-
             booking.Status = BookingStatus.Disputed;
-            booking.DisputeOpenedAt = DateTime.UtcNow;
+            booking.DisputeOpenedAt = DateTime.Now;
 
+            var escrow = await _context.EscrowRecords.FirstOrDefaultAsync(x => x.BookingId == booking.Id, cancellationToken);
+
+            if (escrow is not null && escrow.Status == EscrowStatus.Held) { 
+                escrow.Status = EscrowStatus.Frozen;
+                escrow.FrozenAt = DateTime.Now;
+                escrow.FreezeReason = request.Reason;
+            } 
+            //TODO: Notification
             // TODO: Create Ticket with Category = CompletionDispute when Tickets feature is ready.
             // Ticket should store BookingId, OpenedByUserId, Reason, EvidencePhotoUrls, Status = Open.
 
-            // TODO: Freeze escrow release when payment and escrow module is implemented.
 
             await _context.SaveChangesAsync(cancellationToken);
             return new DisputeBookingResponseDto
             {
-                Id = booking.Id,
-                BookingNumber = booking.BookingNumber,
+                BookingId = booking.Id,
                 Status = booking.Status.ToString(),
                 StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
-                DisputeOpenedAt = booking.DisputeOpenedAt,
                 TicketId = null,
                 Message = "Dispute opened successfully"
             };

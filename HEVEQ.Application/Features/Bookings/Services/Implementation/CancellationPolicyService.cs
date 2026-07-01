@@ -18,10 +18,7 @@ namespace HEVEQ.Application.Features.Bookings.Services.Implementation
             _context = context;
         }
 
-        public async Task<BookingCancellationInitiator> ResolveActorAsync(
-            Booking booking,
-            Guid userId,
-            CancellationToken cancellationToken)
+        public async Task<BookingCancellationInitiator> ResolveActorAsync(Booking booking, Guid userId, CancellationToken cancellationToken)
         {
             var isCustomer = booking.CustomerId == userId;
 

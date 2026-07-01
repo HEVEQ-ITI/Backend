@@ -2,7 +2,7 @@
 {
     public sealed class CreateTimeAdjustmentRequest
     {
-        public decimal AdditionalHours { get; init; }
-        public string Reason { get; init; } = string.Empty;
+        public decimal RequestedAdditionalHrs { get; init; }
+        public string ProviderNote { get; init; } = string.Empty;
     }
 }

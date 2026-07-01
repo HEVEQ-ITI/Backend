@@ -19,6 +19,7 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingById
                 .AsNoTracking()
                 .Include(x => x.Customer)
                 .Include(x => x.AssignedOperator)
+                .Include(x => x.EscrowRecords)
                 .Include(x => x.ServiceListing)
                     .ThenInclude(x => x.ProviderProfile)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);

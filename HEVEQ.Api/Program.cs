@@ -1,11 +1,16 @@
+using Hangfire;
 using HEVEQ.Api.Middleware;
 using HEVEQ.Application;
+using HEVEQ.Application.Common.Jobs;
 using HEVEQ.Application.Common.Mappings;
 using HEVEQ.Infrastructure;
 using HEVEQ.Infrastructure.Identity;
+using HEVEQ.Infrastructure.Services.BackgroundJobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using DotNetEnv;
 
 namespace HEVEQ.Api
 {
@@ -15,7 +20,13 @@ namespace HEVEQ.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            var envPath = Path.Combine(builder.Environment.ContentRootPath, ".env");
+
+            if (File.Exists(envPath))
+            {
+                Env.Load(envPath);
+                builder.Configuration.AddEnvironmentVariables();
+            }
 
             // Application Layer Dependencies
             builder.Services.AddApplication(builder.Configuration);
@@ -70,7 +81,55 @@ namespace HEVEQ.Api
                 };
             });
 
+            builder.Services.AddHangfire(config => {
+                config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+            builder.Services.AddHangfireServer();
+
             var app = builder.Build();
+            app.UseHangfireDashboard("/hangfire");
+            using (var scope = app.Services.CreateScope())
+            {
+                var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+                var backgroundJobOptions = scope.ServiceProvider
+                    .GetRequiredService<IOptions<BackgroundJobOptions>>()
+                    .Value;
+
+                recurringJobs.AddOrUpdate<ProviderResponseSlaJob>(
+                    "booking-provider-response-sla",
+                    job => job.RunAsync(),
+                    backgroundJobOptions.ProviderResponseSlaCron
+                );
+
+                recurringJobs.AddOrUpdate<CustomerCompletionAutoConfirmJob>(
+                    "booking-customer-completion-auto-confirm",
+                    job => job.RunAsync(),
+                    backgroundJobOptions.CustomerCompletionAutoConfirmCron
+                );
+
+                recurringJobs.AddOrUpdate<EscrowReleaseAfterCompletionJob>(
+                    "booking-escrow-release-after-completion",
+                    job => job.RunAsync(),
+                    backgroundJobOptions.EscrowReleaseAfterCompletionCron
+                );
+
+                recurringJobs.AddOrUpdate<MarketplaceAutoConfirmJob>(
+                    "marketplace-auto-confirm",
+                    job => job.RunAsync(),
+                    backgroundJobOptions.MarketplaceAutoConfirmCron
+                );
+
+                recurringJobs.AddOrUpdate<MarketplaceEscrowReleaseJob>(
+                    "marketplace-escrow-release",
+                    job => job.RunAsync(),
+                    backgroundJobOptions.MarketplaceEscrowReleaseCron
+                );
+            }
+
             using (var scope = app.Services.CreateScope())
             {
                 await IdentitySeeder.SeedAsync(scope.ServiceProvider);

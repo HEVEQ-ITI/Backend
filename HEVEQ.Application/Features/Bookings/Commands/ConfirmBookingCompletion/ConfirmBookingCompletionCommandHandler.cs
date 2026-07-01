@@ -50,16 +50,16 @@ namespace HEVEQ.Application.Features.Bookings.Commands.ConfirmBookingCompletion
             booking.Status = BookingStatus.Completed;
             booking.CompletionConfirmedAt = DateTime.Now;
 
-            //Payment will be done later
+            // TODO: Notification to provider that customer has confirmed completion
+
+            //Payment will be done by Backgroundjob to ensure that no dispute has done and clearly the booking is completed and confirmed by both parties
 
             await _context.SaveChangesAsync(cancellationToken);
             return new ConfirmBookingCompletionResponseDto
             {
-                Id = booking.Id,
-                BookingNumber = booking.BookingNumber,
+                BookingId = booking.Id,
                 Status = booking.Status.ToString(),
                 StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
-                CompletionConfirmedAt = booking.CompletionConfirmedAt,
                 Message = "Booking completion confirmed successfully"
             };
         }

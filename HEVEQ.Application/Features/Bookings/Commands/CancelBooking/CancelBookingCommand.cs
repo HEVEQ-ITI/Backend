@@ -6,5 +6,5 @@ using System.Text;
 
 namespace HEVEQ.Application.Features.Bookings.Commands.CancelBooking
 {
-    public sealed record CancelBookingCommand(Guid UserId, Guid BookingId, string reason) : IRequest<BookingDto>;
+    public sealed record CancelBookingCommand(Guid UserId, Guid BookingId, string Reason) : IRequest<CancelBookingResponseDto>;
 }
